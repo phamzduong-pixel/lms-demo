@@ -4,7 +4,7 @@
   <div>
     <p class="eyebrow">Quản trị</p>
     <h1>Quản lý khóa học</h1>
-    <p>Tạo khóa học, quản lý bài học và trạng thái xuất bản.</p>
+    <p>Tạo khóa học, quản lý bài học, học viên đăng ký và trạng thái xuất bản.</p>
   </div>
   <a class="button" href="/admin/courses/new">Tạo khóa học</a>
 </section>
@@ -19,26 +19,17 @@
         <div class="admin-course-main">
           <div class="section-heading">
             <h2><%= course.title %></h2>
-            <span class="badge <%= course.status === 'published' ? 'published' : 'draft' %>">
-              <%= course.status === "published" ? "Đã xuất bản" : "Bản nháp" %>
-            </span>
+            <span class="badge <%= course.status === 'published' ? 'published' : 'draft' %>"><%= course.status === "published" ? "Đã xuất bản" : "Bản nháp" %></span>
           </div>
           <p><%= course.description || "Chưa có mô tả." %></p>
-          <p class="muted"><%= course.lesson_count %> bài học</p>
+          <p class="muted"><%= course.lesson_count %> bài học · <%= course.enrollment_count %> học viên đăng ký</p>
         </div>
         <div class="actions admin-actions">
           <a class="button secondary" href="/admin/courses/<%= course.id %>/lessons">Bài học</a>
+          <a class="button secondary" href="/admin/courses/<%= course.id %>/students">Học viên (<%= course.enrollment_count %>)</a>
           <a class="button secondary" href="/admin/courses/<%= course.id %>/edit">Sửa</a>
-          <form method="post" action="/admin/courses/<%= course.id %>/toggle-status" class="inline">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button class="button secondary" type="submit">
-              <%= course.status === "published" ? "Chuyển thành nháp" : "Xuất bản" %>
-            </button>
-          </form>
-          <form method="post" action="/admin/courses/<%= course.id %>/delete" class="inline" onsubmit="return confirm('Xóa khóa học và các bài học?');">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button class="button danger" type="submit">Xóa</button>
-          </form>
+          <form method="post" action="/admin/courses/<%= course.id %>/toggle-status" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button secondary" type="submit"><%= course.status === "published" ? "Chuyển thành nháp" : "Xuất bản" %></button></form>
+          <form method="post" action="/admin/courses/<%= course.id %>/delete" class="inline" onsubmit="return confirm('Xóa khóa học và các bài học?');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button danger" type="submit">Xóa</button></form>
         </div>
       </article>
     <% }) %>

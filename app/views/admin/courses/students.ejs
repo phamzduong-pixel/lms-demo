@@ -1,0 +1,29 @@
+<% const pageStyles = ["admin.css"]; %>
+<%- include("../../header") %>
+<section class="page-heading">
+  <a class="back-link" href="/admin">← Quản lý khóa học</a>
+  <p class="eyebrow">Học viên theo khóa học</p>
+  <h1><%= course.title %></h1>
+  <p class="lead">Danh sách chỉ đọc về học viên đã đăng ký và tiến độ của họ.</p>
+</section>
+<% if (!students.length) { %>
+  <section class="card empty-state"><h2>Chưa có học viên đăng ký</h2><p>Thông tin tiến độ sẽ xuất hiện tại đây khi có học viên tham gia.</p></section>
+<% } else { %>
+  <section class="card table-card">
+    <div class="table-wrap"><table class="data-table">
+      <thead><tr><th>Học viên</th><th>Email</th><th>Ngày đăng ký</th><th>Tiến độ</th><th></th></tr></thead>
+      <tbody><% students.forEach((student) => {
+        const total = Number(student.total_lessons || 0);
+        const completed = Number(student.completed_lessons || 0);
+        const progress = total ? Math.round((completed / total) * 100) : 0;
+      %><tr>
+        <td data-label="Học viên"><strong><%= student.full_name %></strong></td>
+        <td data-label="Email"><%= student.email %></td>
+        <td data-label="Ngày đăng ký"><%= student.enrolled_at || "—" %></td>
+        <td data-label="Tiến độ"><% if (total) { %><div class="table-progress"><strong><%= completed %>/<%= total %> · <%= progress %>%</strong><progress value="<%= completed %>" max="<%= total %>"></progress></div><% } else { %><span class="muted">Chưa có bài học</span><% } %></td>
+        <td class="table-action"><a class="button secondary" href="/admin/students/<%= student.id %>">Xem học viên</a></td>
+      </tr><% }) %></tbody>
+    </table></div>
+  </section>
+<% } %>
+<%- include("../../footer") %>

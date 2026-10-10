@@ -54,6 +54,19 @@ router.post("/admin/courses", requireAdmin, verifyCsrfToken, async (req, res) =>
   res.redirect("/admin");
 });
 
+router.get("/admin/courses/:courseId/students", requireAdmin, async (req, res) => {
+  const courseId = parseId(req.params.courseId);
+  const course = courseId ? await courseQueries.findById(pool, courseId) : null;
+  if (!course) return renderError(res, 404, "Không tìm thấy khóa học", "Khóa học không tồn tại.");
+
+  const students = await courseQueries.listEnrolledStudents(pool, courseId);
+  res.render("admin/courses/students", {
+    title: "Học viên: " + course.title,
+    course,
+    students
+  });
+});
+
 router.get("/admin/courses/:courseId/edit", requireAdmin, async (req, res) => {
   const courseId = parseId(req.params.courseId);
   const course = courseId ? await courseQueries.findById(pool, courseId) : null;

@@ -11,6 +11,7 @@ const catalogRoutes = require("./routes/catalog");
 const studentCoursesRoutes = require("./routes/studentCourses");
 const adminCoursesRoutes = require("./routes/adminCourses");
 const adminLessonsRoutes = require("./routes/adminLessons");
+const adminStudentsRoutes = require("./routes/adminStudents");
 const healthRouter = require("./routes/health");
 
 if (!process.env.SESSION_SECRET) {
@@ -50,6 +51,7 @@ app.use((req, res, next) => {
   res.locals.message = "";
   res.locals.values = {};
   res.locals.queryNext = "";
+  res.locals.search = "";
   next();
 });
 
@@ -75,6 +77,7 @@ app.use("/", catalogRoutes);
 app.use("/", studentCoursesRoutes);
 app.use("/", adminCoursesRoutes);
 app.use("/", adminLessonsRoutes);
+app.use("/", adminStudentsRoutes);
 app.use("/", healthRouter);
 
 app.use((error, req, res, next) => {

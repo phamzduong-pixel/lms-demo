@@ -1,0 +1,29 @@
+<% const pageStyles = ["admin.css"]; %>
+<%- include("../../header") %>
+<section class="page-heading">
+  <a class="back-link" href="/admin/students">← Danh sách học viên</a>
+  <p class="eyebrow">Chi tiết học viên</p>
+  <h1><%= student.full_name %></h1>
+  <p class="lead"><%= student.email %></p>
+</section>
+<section class="card student-profile">
+  <div><span class="muted">Email</span><strong><%= student.email %></strong></div>
+  <div><span class="muted">Ngày tạo tài khoản</span><strong><%= student.created_at || "—" %></strong></div>
+</section>
+<section class="page-heading compact-heading"><h2>Khóa học đã đăng ký</h2></section>
+<% if (!courses.length) { %>
+  <section class="card empty-state"><p>Học viên chưa đăng ký khóa học nào.</p></section>
+<% } else { %>
+  <section class="admin-list">
+    <% courses.forEach((course) => {
+      const total = Number(course.total_lessons || 0);
+      const completed = Number(course.completed_lessons || 0);
+      const percent = total ? Math.round((completed / total) * 100) : 0;
+    %><article class="card student-course-row">
+      <div><div class="section-heading"><h3><%= course.title %></h3><span class="badge <%= course.status === 'published' ? 'published' : 'draft' %>"><%= course.status === 'published' ? 'Đã xuất bản' : 'Bản nháp' %></span></div>
+      <p class="muted"><%= total ? (completed + "/" + total + " bài học hoàn thành") : "Chưa có bài học" %> · Đăng ký <%= course.enrolled_at || "—" %></p></div>
+      <div class="student-progress-summary"><% if (total) { %><strong><%= percent %>%</strong><progress value="<%= completed %>" max="<%= total %>"></progress><% } else { %><span class="muted">—</span><% } %><a class="text-link" href="/admin/courses/<%= course.id %>/students">Học viên theo khóa</a></div>
+    </article><% }) %>
+  </section>
+<% } %>
+<%- include("../../footer") %>

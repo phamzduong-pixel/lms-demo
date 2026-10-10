@@ -9,8 +9,9 @@ const router = express.Router();
 router.get("/", (req, res) => res.render("home", { title: "LMS Demo" }));
 
 router.get("/courses", async (req, res) => {
-  const courses = await courseQueries.listPublished(pool);
-  res.render("courses/index", { title: "Khóa học", courses });
+  const search = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 255) : "";
+  const courses = await courseQueries.listPublished(pool, search);
+  res.render("courses/index", { title: "Khóa học", courses, search });
 });
 
 router.get("/courses/:courseId", async (req, res) => {

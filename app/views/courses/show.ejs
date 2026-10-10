@@ -1,4 +1,4 @@
-<% const pageStyles = ["courses.css"]; %>
+<% const pageStyles = ["catalog.css"]; %>
 <%- include("../header") %>
 <section class="page-heading">
   <a class="back-link" href="/courses">← Tất cả khóa học</a>
@@ -10,11 +10,14 @@
 <% if (error) { %><div class="alert error"><%= error %></div><% } %>
 <section class="card">
   <div class="section-heading">
-    <h2>Nội dung khóa học</h2>
-    <span><%= lessons.length %> bài học</span>
+    <div>
+      <p class="eyebrow">Nội dung</p>
+      <h2>Danh sách bài học</h2>
+    </div>
+    <span class="muted"><%= lessons.length %> bài học</span>
   </div>
   <% if (!lessons.length) { %>
-    <p>Khóa học chưa có bài học.</p>
+    <p class="empty-inline">Khóa học chưa có bài học.</p>
   <% } else { %>
     <ol class="lesson-list">
       <% lessons.forEach((lesson) => { %>

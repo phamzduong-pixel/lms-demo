@@ -1,13 +1,28 @@
-<% const pageStyles = ["courses.css"]; %>
+<% const pageStyles = ["catalog.css"]; %>
 <%- include("../header") %>
 <section class="page-heading">
   <p class="eyebrow">Catalog</p>
   <h1>Khóa học đã xuất bản</h1>
-  <p>Chọn một khóa học để xem nội dung và đăng ký học.</p>
+  <p>Khám phá các khóa học đang mở và chọn nội dung phù hợp với bạn.</p>
+</section>
+<section class="card catalog-toolbar">
+  <form method="get" action="/courses" class="catalog-search" role="search">
+    <label for="course-search">Tìm theo tên khóa học</label>
+    <div class="search-row">
+      <input id="course-search" name="q" value="<%= search || '' %>" maxlength="255" placeholder="Ví dụ: JavaScript">
+      <button class="button" type="submit">Tìm kiếm</button>
+      <% if (search) { %><a class="button secondary" href="/courses">Xóa lọc</a><% } %>
+    </div>
+  </form>
 </section>
 <% if (!courses.length) { %>
-  <section class="card empty-state"><p>Hiện chưa có khóa học nào được xuất bản.</p></section>
+  <section class="card empty-state">
+    <h2><%= search ? "Không tìm thấy khóa học" : "Chưa có khóa học" %></h2>
+    <p><%= search ? "Không có khóa học đã xuất bản phù hợp với từ khóa “" + search + "”." : "Hiện chưa có khóa học nào được xuất bản." %></p>
+    <% if (search) { %><a class="button secondary" href="/courses">Xem tất cả khóa học</a><% } %>
+  </section>
 <% } else { %>
+  <p class="result-count"><%= search ? "Kết quả cho “" + search + "”" : (courses.length + " khóa học") %></p>
   <section class="card-grid">
     <% courses.forEach((course) => { %>
       <article class="card course-card">

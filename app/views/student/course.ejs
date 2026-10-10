@@ -1,34 +1,67 @@
 <% const pageStyles = ["student.css"]; %>
 <%- include("../header") %>
 <section class="page-heading">
-  <a class="back-link" href="/student">← Khóa học của tôi</a>
+  <a class="back-link" href="/student">← Học của tôi</a>
   <p class="eyebrow">Đang học</p>
   <h1><%= course.title %></h1>
   <p class="lead"><%= course.description || "Khóa học chưa có mô tả." %></p>
 </section>
+<% if (message) { %><div class="alert success"><%= message %></div><% } %>
 <section class="card progress-card">
   <div class="progress-label"><span>Tiến độ khóa học</span><strong><%= progressPercent %>%</strong></div>
   <progress value="<%= completedLessons %>" max="<%= lessons.length || 1 %>"></progress>
   <p class="muted"><%= completedLessons %>/<%= lessons.length %> bài học hoàn thành</p>
 </section>
-<section class="lesson-stack">
-  <% if (!lessons.length) { %>
-    <article class="card empty-state"><p>Khóa học chưa có bài học.</p></article>
-  <% } %>
-  <% lessons.forEach((lesson) => { %>
-    <article class="card lesson-card">
-      <div class="section-heading">
-        <h2><span class="lesson-number"><%= lesson.position %></span><%= lesson.title %></h2>
-        <% if (lesson.completed) { %><span class="badge complete">Đã hoàn thành</span><% } %>
-      </div>
-      <pre class="lesson-content"><%= lesson.content || "" %></pre>
-      <% if (!lesson.completed) { %>
-        <form method="post" action="/student/courses/<%= course.id %>/lessons/<%= lesson.id %>/complete">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button class="button" type="submit">Đánh dấu hoàn thành</button>
-        </form>
-      <% } %>
-    </article>
-  <% }) %>
+<section class="student-course-shell">
+  <aside class="card lesson-picker">
+    <div class="section-heading"><h2>Bài học</h2><span class="muted"><%= lessons.length %></span></div>
+    <% if (!lessons.length) { %>
+      <p class="muted">Khóa học chưa có bài học.</p>
+    <% } else { %>
+      <nav aria-label="Danh sách bài học">
+        <% lessons.forEach((lesson) => {
+          const selected = currentLesson && Number(currentLesson.id) === Number(lesson.id);
+          const completed = Number(lesson.completed) === 1;
+        %>
+          <a class="lesson-picker-item <%= selected ? 'selected' : '' %>" href="/student/courses/<%= course.id %>/lessons/<%= lesson.id %>" <% if (selected) { %>aria-current="page"<% } %>>
+            <span class="lesson-number"><%= lesson.position %></span>
+            <span class="lesson-picker-text"><%= lesson.title %><small><%= completed ? "Đã hoàn thành" : "Chưa hoàn thành" %></small></span>
+          </a>
+        <% }) %>
+      </nav>
+    <% } %>
+  </aside>
+  <div class="lesson-view">
+    <% if (!currentLesson) { %>
+      <section class="card empty-state lesson-welcome">
+        <h2>Chọn một bài học để bắt đầu</h2>
+        <p>Nội dung chỉ hiển thị khi bạn đã đăng ký khóa học đang xuất bản này.</p>
+        <% if (lessons.length) { %><a class="button" href="/student/courses/<%= course.id %>/lessons/<%= lessons[0].id %>">Mở bài đầu tiên</a><% } %>
+      </section>
+    <% } else { %>
+      <article class="card lesson-card">
+        <div class="section-heading lesson-heading">
+          <div><p class="eyebrow">Bài <%= currentIndex + 1 %>/<%= lessons.length %></p><h2><%= currentLesson.title %></h2></div>
+          <% if (Number(currentLesson.completed) === 1) { %><span class="badge complete">Đã hoàn thành</span><% } %>
+        </div>
+        <pre class="lesson-content"><%= currentLesson.content || "Bài học chưa có nội dung." %></pre>
+        <% if (Number(currentLesson.completed) === 1) { %>
+          <form method="post" action="/student/courses/<%= course.id %>/lessons/<%= currentLesson.id %>/uncomplete">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="button secondary" type="submit">Bỏ đánh dấu hoàn thành</button>
+          </form>
+        <% } else { %>
+          <form method="post" action="/student/courses/<%= course.id %>/lessons/<%= currentLesson.id %>/complete">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="button" type="submit">Đánh dấu hoàn thành</button>
+          </form>
+        <% } %>
+      </article>
+      <nav class="lesson-nav" aria-label="Điều hướng bài học">
+        <% if (previousLesson) { %><a class="button secondary" href="/student/courses/<%= course.id %>/lessons/<%= previousLesson.id %>">← <%= previousLesson.title %></a><% } else { %><span></span><% } %>
+        <% if (nextLesson) { %><a class="button secondary" href="/student/courses/<%= course.id %>/lessons/<%= nextLesson.id %>"><%= nextLesson.title %> →</a><% } %>
+      </nav>
+    <% } %>
+  </div>
 </section>
 <%- include("../footer") %>
