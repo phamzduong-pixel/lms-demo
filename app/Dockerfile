@@ -5,6 +5,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY src ./src
+COPY views ./views
+COPY public ./public
 
 ENV NODE_ENV=production
 USER node
