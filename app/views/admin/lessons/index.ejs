@@ -1,0 +1,31 @@
+<% const pageStyles = ["admin.css"]; %>
+<%- include("../../header") %>
+<section class="page-heading split-heading">
+  <div>
+    <a class="back-link" href="/admin">← Quản lý khóa học</a>
+    <h1>Bài học: <%= course.title %></h1>
+  </div>
+  <a class="button" href="/admin/courses/<%= course.id %>/lessons/new">Thêm bài học</a>
+</section>
+<% if (!lessons.length) { %>
+  <section class="card empty-state"><p>Chưa có bài học nào trong khóa học này.</p></section>
+<% } else { %>
+  <section class="lesson-stack">
+    <% lessons.forEach((lesson) => { %>
+      <article class="card admin-lesson">
+        <div>
+          <h2><span class="lesson-number"><%= lesson.position %></span><%= lesson.title %></h2>
+          <p class="muted">Nội dung: <%= (lesson.content || "").length %> ký tự</p>
+        </div>
+        <div class="actions">
+          <a class="button secondary" href="/admin/courses/<%= course.id %>/lessons/<%= lesson.id %>/edit">Sửa</a>
+          <form method="post" action="/admin/courses/<%= course.id %>/lessons/<%= lesson.id %>/delete" class="inline" onsubmit="return confirm('Xóa bài học này?');">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="button danger" type="submit">Xóa</button>
+          </form>
+        </div>
+      </article>
+    <% }) %>
+  </section>
+<% } %>
+<%- include("../../footer") %>

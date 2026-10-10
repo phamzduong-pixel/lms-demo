@@ -1,0 +1,40 @@
+<% const pageStyles = ["courses.css"]; %>
+<%- include("../header") %>
+<section class="page-heading">
+  <a class="back-link" href="/courses">← Tất cả khóa học</a>
+  <span class="badge published">Đã xuất bản</span>
+  <h1><%= course.title %></h1>
+  <p class="lead"><%= course.description || "Khóa học chưa có mô tả." %></p>
+</section>
+<% if (message) { %><div class="alert success"><%= message %></div><% } %>
+<% if (error) { %><div class="alert error"><%= error %></div><% } %>
+<section class="card">
+  <div class="section-heading">
+    <h2>Nội dung khóa học</h2>
+    <span><%= lessons.length %> bài học</span>
+  </div>
+  <% if (!lessons.length) { %>
+    <p>Khóa học chưa có bài học.</p>
+  <% } else { %>
+    <ol class="lesson-list">
+      <% lessons.forEach((lesson) => { %>
+        <li><span class="lesson-number"><%= lesson.position %></span><span><%= lesson.title %></span></li>
+      <% }) %>
+    </ol>
+  <% } %>
+  <div class="actions">
+    <% if (currentUser && currentUser.role === "student") { %>
+      <% if (enrolled) { %>
+        <a class="button" href="/student/courses/<%= course.id %>">Mở khóa học</a>
+      <% } else { %>
+        <form method="post" action="/courses/<%= course.id %>/enroll" class="inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="button" type="submit">Đăng ký khóa học</button>
+        </form>
+      <% } %>
+    <% } else if (!currentUser) { %>
+      <a class="button" href="/login?next=/courses/<%= course.id %>">Đăng nhập để đăng ký</a>
+    <% } %>
+  </div>
+</section>
+<%- include("../footer") %>

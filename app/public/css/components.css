@@ -1,0 +1,157 @@
+.hero,
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.lesson-stack,
+.admin-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-heading h2 { margin: 0; }
+
+.lesson-number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: #eef2f6;
+  color: #315f8c;
+  font-weight: 700;
+}
+
+.badge {
+  display: inline-block;
+  width: fit-content;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 650;
+}
+
+.badge.published,
+.badge.complete {
+  background: #e9f7ed;
+  color: #246b36;
+}
+
+.badge.draft {
+  background: #fff6dd;
+  color: #8a5a00;
+}
+
+.button {
+  display: inline-block;
+  width: fit-content;
+  padding: .65rem .95rem;
+  border: 0;
+  border-radius: 8px;
+  background: #315f8c;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.button.secondary {
+  background: #eef2f6;
+  color: #283746;
+}
+
+.button.danger {
+  background: #a33a3a;
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin-top: 1rem;
+}
+
+.actions.centered { justify-content: center; }
+
+.back-link,
+.text-link {
+  display: inline-block;
+  text-decoration: none;
+  font-weight: 650;
+}
+
+.back-link { margin-bottom: .65rem; }
+
+form {
+  display: grid;
+  gap: 1rem;
+}
+
+form.inline,
+.inline {
+  display: inline;
+}
+
+label {
+  display: grid;
+  gap: .4rem;
+  font-weight: 650;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: .7rem .8rem;
+  border: 1px solid #cbd2d9;
+  border-radius: 8px;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+}
+
+textarea { resize: vertical; }
+
+.alert {
+  margin-bottom: 1rem;
+  padding: .75rem 1rem;
+  border-radius: 8px;
+}
+
+.error {
+  background: #fff0f0;
+  color: #9b2c2c;
+}
+
+.success {
+  background: #effaf2;
+  color: #246b36;
+}
+
+.empty-state { text-align: center; }
+.muted { color: #68707a; }
+
+.narrow {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.link-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #315f8c;
+  cursor: pointer;
+  font: inherit;
+}

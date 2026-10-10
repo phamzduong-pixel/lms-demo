@@ -1,0 +1,27 @@
+.admin-course,
+.admin-lesson {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.admin-course-main { min-width: 0; }
+.admin-course-main p { margin: .4rem 0; }
+.admin-actions {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+@media (max-width: 700px) {
+  .admin-course,
+  .admin-lesson {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-actions {
+    justify-content: flex-start;
+    margin-top: .5rem;
+  }
+}

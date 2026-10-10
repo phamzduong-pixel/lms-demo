@@ -1,0 +1,22 @@
+<% const pageStyles = ["courses.css"]; %>
+<%- include("../header") %>
+<section class="page-heading">
+  <p class="eyebrow">Catalog</p>
+  <h1>Khóa học đã xuất bản</h1>
+  <p>Chọn một khóa học để xem nội dung và đăng ký học.</p>
+</section>
+<% if (!courses.length) { %>
+  <section class="card empty-state"><p>Hiện chưa có khóa học nào được xuất bản.</p></section>
+<% } else { %>
+  <section class="card-grid">
+    <% courses.forEach((course) => { %>
+      <article class="card course-card">
+        <span class="badge published">Đã xuất bản</span>
+        <h2><a href="/courses/<%= course.id %>"><%= course.title %></a></h2>
+        <p><%= course.description || "Khóa học chưa có mô tả." %></p>
+        <a class="text-link" href="/courses/<%= course.id %>">Xem chi tiết →</a>
+      </article>
+    <% }) %>
+  </section>
+<% } %>
+<%- include("../footer") %>

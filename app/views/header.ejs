@@ -1,21 +1,38 @@
 <% const pageTitle = title || "LMS Demo"; %>
+<% const requestedStyles = typeof pageStyles !== "undefined" && Array.isArray(pageStyles) ? pageStyles : []; %>
 <!doctype html>
 <html lang="vi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= pageTitle %> · LMS Demo</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <% requestedStyles.forEach((stylesheet) => { %>
+    <link rel="stylesheet" href="/css/<%= stylesheet %>">
+  <% }) %>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="/">LMS Demo</a>
-    <nav>
+    <nav class="nav">
+      <a href="/courses">Khóa học</a>
+      <% if (currentUser && currentUser.role === "student") { %>
+        <a href="/student">Học của tôi</a>
+      <% } %>
+      <% if (currentUser && currentUser.role === "admin") { %>
+        <a href="/admin">Quản trị</a>
+      <% } %>
       <% if (currentUser) { %>
-        <span><%= currentUser.full_name %></span>
-        <form method="post" action="/logout" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="link-button">Đăng xuất</button></form>
+        <span class="user-label"><%= currentUser.full_name %></span>
+        <form method="post" action="/logout" class="inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="link-button">Đăng xuất</button>
+        </form>
       <% } else { %>
-        <a href="/login">Đăng nhập</a><a href="/register">Đăng ký</a>
+        <a href="/login">Đăng nhập</a>
+        <a href="/register">Đăng ký</a>
       <% } %>
     </nav>
   </header>

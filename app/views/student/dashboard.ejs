@@ -1,0 +1,32 @@
+<% const pageStyles = ["courses.css", "student.css"]; %>
+<%- include("../header") %>
+<section class="page-heading">
+  <p class="eyebrow">Khu vực học viên</p>
+  <h1>Khóa học của tôi</h1>
+  <p>Các khóa học bạn đã đăng ký và tiến độ hiện tại.</p>
+</section>
+<% if (!courses.length) { %>
+  <section class="card empty-state">
+    <h2>Bạn chưa đăng ký khóa học nào</h2>
+    <p>Hãy khám phá catalog để bắt đầu học.</p>
+    <a class="button" href="/courses">Khám phá khóa học</a>
+  </section>
+<% } else { %>
+  <section class="card-grid">
+    <% courses.forEach((course) => {
+      const total = Number(course.total_lessons || 0);
+      const completed = Number(course.completed_lessons || 0);
+      const percent = total ? Math.round((completed / total) * 100) : 0;
+    %>
+      <article class="card course-card">
+        <h2><a href="/student/courses/<%= course.id %>"><%= course.title %></a></h2>
+        <p><%= course.description || "Khóa học chưa có mô tả." %></p>
+        <div class="progress-label"><span>Tiến độ</span><strong><%= percent %>%</strong></div>
+        <progress value="<%= completed %>" max="<%= total || 1 %>"></progress>
+        <p class="muted"><%= completed %>/<%= total %> bài học hoàn thành</p>
+        <a class="text-link" href="/student/courses/<%= course.id %>">Tiếp tục học →</a>
+      </article>
+    <% }) %>
+  </section>
+<% } %>
+<%- include("../footer") %>

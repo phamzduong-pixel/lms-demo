@@ -1,12 +1,12 @@
+<% const pageStyles = []; %>
 <%- include("header") %>
 <section class="hero">
   <p class="eyebrow">Nền tảng học tập</p>
   <h1>Học tập rõ ràng, tiến bộ từng bước.</h1>
-  <p>Đăng ký tài khoản học viên để bắt đầu sử dụng LMS Demo.</p>
-  <% if (currentUser) { %>
-    <a class="button" href="<%= currentUser.role === 'admin' ? '/admin' : '/student' %>">Mở khu vực của bạn</a>
-  <% } else { %>
-    <a class="button" href="/register">Đăng ký học viên</a>
-  <% } %>
+  <p>Khám phá các khóa học đã xuất bản và theo dõi tiến độ học tập của bạn.</p>
+  <div class="actions centered">
+    <a class="button" href="/courses">Xem khóa học</a>
+    <% if (!currentUser) { %><a class="button secondary" href="/register">Đăng ký học viên</a><% } %>
+  </div>
 </section>
 <%- include("footer") %>
