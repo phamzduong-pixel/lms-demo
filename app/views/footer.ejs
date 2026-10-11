@@ -1,4 +1,8 @@
   </main>
-  <footer>© LMS Demo</footer>
+  <footer>© LMS Demo · Nền tảng học trực tuyến rõ ràng và thân thiện.</footer>
+  <% const requestedScripts = typeof pageScripts !== "undefined" && Array.isArray(pageScripts) ? pageScripts : []; %>
+  <% requestedScripts.forEach((script) => { %>
+    <script src="/js/<%= script %>" defer></script>
+  <% }) %>
 </body>
 </html>

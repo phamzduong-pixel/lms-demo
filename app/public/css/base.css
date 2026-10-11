@@ -1,20 +1,20 @@
 :root {
-  --ink: #273248;
-  --muted: #667085;
-  --primary: #5962a8;
-  --primary-strong: #414a91;
-  --primary-soft: #e8eaff;
+  --ink: #17223b;
+  --muted: #69758e;
+  --primary: #5b57e8;
+  --primary-strong: #4238c9;
+  --primary-soft: #ececff;
   --mint: #dff3eb;
   --peach: #ffeadb;
-  --lavender: #eee9ff;
-  --surface: #eef1f7;
-  --surface-raised: #f7f8fc;
-  --card: #f0f3f9;
-  --line: rgba(88, 101, 139, .18);
-  --shadow-light: rgba(255, 255, 255, .88);
-  --shadow-dark: rgba(95, 110, 145, .18);
-  --shadow-clay: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
-  --shadow-clay-small: 4px 4px 10px rgba(95, 110, 145, .14), -4px -4px 10px rgba(255, 255, 255, .75);
+  --lavender: #ebe9ff;
+  --surface: #edf3fa;
+  --surface-raised: #fbfcff;
+  --card: #f8faff;
+  --line: rgba(75, 88, 128, .16);
+  --shadow-light: rgba(255, 255, 255, .9);
+  --shadow-dark: rgba(74, 91, 128, .17);
+  --shadow-clay: 8px 8px 20px var(--shadow-dark), -8px -8px 20px var(--shadow-light);
+  --shadow-clay-small: 4px 4px 10px rgba(74, 91, 128, .13), -4px -4px 10px rgba(255, 255, 255, .78);
   --radius-sm: 12px;
   --radius-md: 18px;
   --radius-lg: 24px;
@@ -23,6 +23,7 @@
   --space-3: 1rem;
   --space-4: 1.5rem;
   --space-5: 2rem;
+  --space-6: 2.5rem;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--ink);
   background: var(--surface);
@@ -36,10 +37,10 @@ body {
   margin: 0;
   color: var(--ink);
   line-height: 1.55;
-  background: radial-gradient(circle at 12% 0%, var(--lavender), transparent 28rem), radial-gradient(circle at 92% 12%, var(--mint), transparent 24rem), var(--surface);
+  background: radial-gradient(circle at 8% 2%, var(--lavender), transparent 30rem), radial-gradient(circle at 94% 10%, #def2fb, transparent 27rem), var(--surface);
 }
 
-h1, h2, h3 { color: #202b42; line-height: 1.2; }
+h1, h2, h3 { color: #131d34; line-height: 1.2; }
 h1 { margin-top: 0; font-size: clamp(1.85rem, 4vw, 2.8rem); }
 h2 { font-size: clamp(1.15rem, 2vw, 1.4rem); }
 h3 { font-size: 1rem; }

@@ -27,7 +27,7 @@
         <div class="actions admin-actions">
           <a class="button secondary" href="/admin/courses/<%= course.id %>/lessons">Bài học</a>
           <a class="button secondary" href="/admin/courses/<%= course.id %>/students">Học viên (<%= course.enrollment_count %>)</a>
-          <a class="button secondary" href="/admin/courses/<%= course.id %>/edit">Sửa</a>
+          <a class="button secondary" href="/admin/courses/<%= course.id %>/quiz">Quiz</a><a class="button secondary" href="/admin/courses/<%= course.id %>/reviews">Đánh giá</a><a class="button secondary" href="/admin/courses/<%= course.id %>/edit">Sửa</a>
           <form method="post" action="/admin/courses/<%= course.id %>/toggle-status" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button secondary" type="submit"><%= course.status === "published" ? "Chuyển thành nháp" : "Xuất bản" %></button></form>
           <form method="post" action="/admin/courses/<%= course.id %>/delete" class="inline" onsubmit="return confirm('Xóa khóa học và các bài học?');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button danger" type="submit">Xóa</button></form>
         </div>

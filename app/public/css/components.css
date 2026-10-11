@@ -2,20 +2,20 @@
 .card {
   border: 1px solid rgba(255, 255, 255, .72);
   border-radius: var(--radius-lg);
-  padding: clamp(1.1rem, 3vw, var(--space-5));
-  background: rgba(240, 243, 249, .92);
+  padding: clamp(1.25rem, 3vw, var(--space-5));
+  background: rgba(248, 250, 255, .93);
   box-shadow: var(--shadow-clay);
 }
 
 .card-grid,
 .lesson-stack,
-.admin-list { display: grid; gap: var(--space-3); }
+.admin-list { display: grid; gap: var(--space-4); }
 .card-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-.course-card { display: flex; flex-direction: column; gap: var(--space-2); }
+.course-card { display: flex; flex-direction: column; gap: var(--space-3); }
 .course-card h2, .course-card p { margin: 0; }
 .course-card p { flex: 1; }
 
-.section-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .section-heading h2, .section-heading h3 { margin: 0; }
 
 .lesson-number {
@@ -45,7 +45,7 @@
   padding: .66rem 1rem;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
   box-shadow: 4px 4px 9px rgba(60, 71, 139, .22), -3px -3px 8px rgba(255, 255, 255, .45);
   color: #fff;
   cursor: pointer;
@@ -54,16 +54,16 @@
   text-decoration: none;
   transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
 }
-.button:hover { background: var(--primary-strong); transform: translateY(-1px); }
+.button:hover { background: linear-gradient(135deg, #514ce5, #352dab); transform: translateY(-1px); }
 .button.secondary { background: var(--surface-raised); box-shadow: var(--shadow-clay-small); color: var(--ink); }
 .button.danger { background: #a94d5d; }
 
-.actions { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin-top: var(--space-3); }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: var(--space-4); }
 .actions.centered { justify-content: center; }
 .back-link, .text-link { display: inline-block; font-weight: 750; text-decoration: none; }
 .back-link { margin-bottom: .7rem; }
 
-form { display: grid; gap: var(--space-3); }
+form { display: grid; gap: var(--space-4); }
 form.inline, .inline { display: inline; }
 label { display: grid; gap: .45rem; color: #33415d; font-weight: 750; }
 input, textarea {
@@ -79,7 +79,7 @@ input, textarea {
 textarea { min-height: 7rem; resize: vertical; }
 input:focus, textarea:focus, button:focus-visible, a:focus-visible { outline: 3px solid rgba(89, 98, 168, .42); outline-offset: 3px; }
 
-.alert { margin-bottom: var(--space-3); padding: .85rem 1rem; border-radius: var(--radius-sm); box-shadow: var(--shadow-clay-small); }
+.alert { margin-bottom: var(--space-4); padding: 1rem 1.1rem; border-radius: var(--radius-sm); box-shadow: var(--shadow-clay-small); }
 .error { background: #fff0f2; color: #8e3346; }
 .success { background: #e6f6ee; color: #176147; }
 .empty-state { text-align: center; }
@@ -89,4 +89,4 @@ input:focus, textarea:focus, button:focus-visible, a:focus-visible { outline: 3p
 
 progress { width: 100%; height: .8rem; border: 0; border-radius: 999px; overflow: hidden; accent-color: var(--primary); }
 progress::-webkit-progress-bar { background: #dfe4ee; border-radius: 999px; }
-progress::-webkit-progress-value { background: var(--primary); border-radius: 999px; }
+progress::-webkit-progress-value { background: linear-gradient(135deg, var(--primary), var(--primary-strong)); border-radius: 999px; }

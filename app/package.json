@@ -1,26 +1,25 @@
 {
-    "name":  "lms-demo",
-    "version":  "1.0.0",
-    "description":  "",
-    "main":  "index.js",
-    "scripts":  {
-                    "test":  "node --check src/server.js \u0026\u0026 node --check src/middleware/auth.js \u0026\u0026 node --check src/middleware/csrf.js \u0026\u0026 node --check src/scripts/create-admin.js \u0026\u0026 node --check src/routes/auth.js \u0026\u0026 node --check src/routes/catalog.js \u0026\u0026 node --check src/routes/studentCourses.js \u0026\u0026 node --check src/routes/adminCourses.js \u0026\u0026 node --check src/routes/adminLessons.js \u0026\u0026 node --check src/routes/adminStudents.js \u0026\u0026 node --check src/routes/health.js \u0026\u0026 node --check src/routes/routeHelpers.js \u0026\u0026 node --check src/services/lmsService.js \u0026\u0026 node --check src/queries/courseQueries.js \u0026\u0026 node --check src/queries/lessonQueries.js \u0026\u0026 node --check src/queries/enrollmentQueries.js \u0026\u0026 node --check src/queries/progressQueries.js \u0026\u0026 node --check src/queries/studentQueries.js \u0026\u0026 node --check src/queries/userQueries.js \u0026\u0026 node --check src/queries/healthQueries.js \u0026\u0026 node --test test/csrf.test.js test/lms.test.js test/permissions.test.js test/adminForms.test.js test/catalog.test.js test/studentLearning.test.js test/adminStudents.test.js test/viewRender.test.js",
-                    "start":  "node src/server.js",
-                    "create-admin":  "node src/scripts/create-admin.js"
-                },
-    "keywords":  [
-
-                 ],
-    "author":  "",
-    "license":  "ISC",
-    "type":  "commonjs",
-    "dependencies":  {
-                         "bcryptjs":  "^3.0.3",
-                         "dotenv":  "^18.0.7",
-                         "ejs":  "^7.0.1",
-                         "express":  "^5.3.0",
-                         "express-session":  "^1.19.0",
-                         "mysql2":  "^3.24.5",
-                         "express-mysql-session":  "^3.0.3"
-                     }
+    "name": "lms-demo",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "node --check src/server.js && node --check src/middleware/auth.js && node --check src/middleware/csrf.js && node --check src/scripts/create-admin.js && node --check src/routes/auth.js && node --check src/routes/catalog.js && node --check src/routes/studentCourses.js && node --check src/routes/adminCourses.js && node --check src/routes/adminLessons.js && node --check src/routes/adminStudents.js && node --check src/routes/health.js && node --check src/routes/routeHelpers.js && node --check src/services/lmsService.js && node --check src/services/passwordResetService.js && node --check public/js/auth.js && node --check src/queries/courseQueries.js && node --check src/queries/lessonQueries.js && node --check src/queries/enrollmentQueries.js && node --check src/queries/progressQueries.js && node --check src/queries/studentQueries.js && node --check src/queries/userQueries.js && node --check src/queries/healthQueries.js && node --test test/csrf.test.js test/lms.test.js test/permissions.test.js test/adminForms.test.js test/catalog.test.js test/studentLearning.test.js test/adminStudents.test.js test/passwordReset.test.js test/viewRender.test.js test/learningFeatures.test.js test/quizQueries.test.js",
+        "start": "node src/server.js",
+        "create-admin": "node src/scripts/create-admin.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "dotenv": "^18.0.7",
+        "ejs": "^7.0.1",
+        "express": "^5.3.0",
+        "express-mysql-session": "^3.0.3",
+        "express-session": "^1.19.0",
+        "mysql2": "^3.24.5",
+        "nodemailer": "^7.0.13"
+    }
 }

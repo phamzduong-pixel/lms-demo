@@ -1,0 +1,28 @@
+<% const pageStyles=["student.css","quiz.css"]; %>
+<%- include("../header",{pageStyles}) %>
+<section class="page-heading">
+<a class="back-link" href="/student/courses/<%= course.id %>/quiz/history">← Lịch sử</a>
+<h1>Kết quả: <%= attempt.score %>%</h1>
+<p>
+<%= attempt.correct_count %>/<%= attempt.total_questions %> câu đúng.</p>
+</section>
+<section class="quiz-results">
+<% answers.forEach((answer,index)=>{ %>
+<article class="card">
+<h2>Câu <%= index+1 %>
+</h2>
+<p>
+<%= answer.question_text %>
+</p>
+<p>Lựa chọn của bạn: <strong>
+<%= answer.selected_option %>
+</strong>
+</p>
+<p class="<%= Number(answer.is_correct)===1?'success-text':'error-text' %>">
+<%= Number(answer.is_correct)===1?'Đúng':'Chưa đúng' %>. Đáp án đúng: <%= answer.correct_option %>
+</p>
+</article>
+<% }) %>
+</section>
+<a class="button" href="/student/courses/<%= course.id %>/quiz">Làm lại</a>
+<%- include("../footer") %>

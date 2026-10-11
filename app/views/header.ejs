@@ -1,5 +1,7 @@
 <% const pageTitle = title || "LMS Demo"; %>
 <% const requestedStyles = typeof pageStyles !== "undefined" && Array.isArray(pageStyles) ? pageStyles : []; %>
+<% const requestedPageClass = typeof pageClass === "string" ? pageClass : ""; %>
+<% const currentRoute = typeof currentPath === "string" ? currentPath : ""; %>
 <!doctype html>
 <html lang="vi">
 <head>
@@ -13,18 +15,23 @@
     <link rel="stylesheet" href="/css/<%= stylesheet %>">
   <% }) %>
 </head>
-<body>
+<body class="<%= requestedPageClass %>">
   <header class="topbar">
-    <a class="brand" href="/">LMS Demo</a>
+    <a class="brand" href="/" aria-label="LMS Demo - Trang chủ">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false"><path d="M2.5 8.1 12 3l9.5 5.1L12 13.2 2.5 8.1Zm3.1 3.2v4.3c0 1.7 2.9 3.5 6.4 3.5s6.4-1.8 6.4-3.5v-4.3L12 14.8l-6.4-3.5Zm14.2-.9v5.7h1.4V9.7l-1.4.7Z"/></svg>
+      </span>
+      <span class="brand-copy"><strong>LMS Demo</strong><small>E-learning portal</small></span>
+    </a>
     <nav class="nav" aria-label="Điều hướng chính">
       <div class="nav-main">
-        <a href="/courses">Khóa học</a>
+        <a class="nav-link <%= currentRoute.startsWith('/courses') ? 'active' : '' %>" href="/courses" <% if (currentRoute.startsWith('/courses')) { %>aria-current="page"<% } %>>Khóa học</a>
         <% if (currentUser && currentUser.role === "student") { %>
-          <a href="/student">Học của tôi</a>
+          <a class="nav-link <%= currentRoute.startsWith('/student') ? 'active' : '' %>" href="/student" <% if (currentRoute.startsWith('/student')) { %>aria-current="page"<% } %>>Học của tôi</a>
         <% } %>
         <% if (currentUser && currentUser.role === "admin") { %>
-          <a href="/admin">Quản trị</a>
-          <a href="/admin/students">Học viên</a>
+          <a class="nav-link <%= currentRoute.startsWith('/admin/courses') || currentRoute === '/admin' ? 'active' : '' %>" href="/admin" <% if (currentRoute.startsWith('/admin/courses') || currentRoute === '/admin') { %>aria-current="page"<% } %>>Quản trị</a>
+          <a class="nav-link <%= currentRoute.startsWith('/admin/students') ? 'active' : '' %>" href="/admin/students" <% if (currentRoute.startsWith('/admin/students')) { %>aria-current="page"<% } %>>Học viên</a>
         <% } %>
       </div>
       <div class="nav-account">
@@ -32,11 +39,11 @@
           <span class="user-label"><%= currentUser.full_name %></span>
           <form method="post" action="/logout" class="inline">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button type="submit" class="link-button">Đăng xuất</button>
+            <button type="submit" class="nav-link link-button">Đăng xuất</button>
           </form>
         <% } else { %>
-          <a href="/login">Đăng nhập</a>
-          <a href="/register">Đăng ký</a>
+          <a class="nav-link nav-auth-link <%= currentRoute === '/login' ? 'active' : '' %>" href="/login" <% if (currentRoute === '/login') { %>aria-current="page"<% } %>>Đăng nhập</a>
+          <a class="nav-link nav-auth-link <%= currentRoute === '/register' ? 'active' : '' %>" href="/register" <% if (currentRoute === '/register') { %>aria-current="page"<% } %>>Đăng ký</a>
         <% } %>
       </div>
     </nav>

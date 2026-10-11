@@ -1,0 +1,38 @@
+<% const pageStyles=["student.css","quiz.css"]; %>
+<%- include("../header",{pageStyles}) %>
+<section class="page-heading">
+<a class="back-link" href="/student/courses/<%= course.id %>">← <%= course.title %>
+</a>
+<h1>Bài kiểm tra</h1>
+<p>Mỗi lần nộp được lưu là một lượt làm; bạn có thể làm lại.</p>
+</section>
+<% if(error){ %>
+<div class="alert error">
+<%= error %>
+</div>
+<% } %>
+<% if(!questions.length){ %>
+<section class="card empty-state">
+<h2>Chưa có câu hỏi</h2>
+<p>Quản trị viên chưa tạo bài kiểm tra cho khóa học này.</p>
+</section>
+<% }else{ %>
+<form class="quiz-form" method="post" action="/student/courses/<%= course.id %>/quiz">
+<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<% questions.forEach((question,index)=>{ %>
+<fieldset class="card">
+<legend>Câu <%= index+1 %>. <%= question.question_text %>
+</legend>
+<% question.options.forEach((option)=>{ %>
+<label class="option">
+<input type="radio" name="answers[<%= question.id %>]" value="<%= option.id %>" required>
+<%= option.option_text %>
+</label>
+<% }) %>
+</fieldset>
+<% }) %>
+<button class="button">Nộp bài</button>
+<a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Lịch sử làm bài</a>
+</form>
+<% } %>
+<%- include("../footer") %>

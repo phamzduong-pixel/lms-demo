@@ -1,4 +1,4 @@
-<% const pageStyles = ["student.css"]; %>
+<% const pageStyles = ["student.css"]; const lessonNote = typeof note !== "undefined" ? note : null; const savedLessonIds = typeof bookmarkedLessonIds !== "undefined" ? bookmarkedLessonIds : []; %>
 <%- include("../header") %>
 <section class="page-heading">
   <a class="back-link" href="/student">← Học của tôi</a>
@@ -12,6 +12,7 @@
   <progress value="<%= completedLessons %>" max="<%= lessons.length || 1 %>"></progress>
   <p class="muted"><%= completedLessons %>/<%= lessons.length %> bài học hoàn thành</p>
 </section>
+<div class="actions"><a class="button secondary" href="/student/courses/<%= course.id %>/quiz">Bài kiểm tra</a><a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Lịch sử kiểm tra</a></div>
 <section class="student-course-shell">
   <aside class="card lesson-picker">
     <div class="section-heading"><h2>Bài học</h2><span class="muted"><%= lessons.length %></span></div>
@@ -45,6 +46,7 @@
           <% if (Number(currentLesson.completed) === 1) { %><span class="badge complete">Đã hoàn thành</span><% } %>
         </div>
         <pre class="lesson-content"><%= currentLesson.content || "Bài học chưa có nội dung." %></pre>
+        <section class="lesson-note"><h3>Ghi chú cá nhân</h3><form method="post" action="/student/courses/<%= course.id %>/lessons/<%= currentLesson.id %>/note"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><textarea name="content" maxlength="10000" required><%= lessonNote ? lessonNote.content : "" %></textarea><button class="button secondary">Lưu ghi chú</button></form><% if (lessonNote) { %><form method="post" action="/student/courses/<%= course.id %>/lessons/<%= currentLesson.id %>/note/delete" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-link">Bỏ ghi chú</button></form><% } %><% const bookmarked = savedLessonIds.includes(Number(currentLesson.id)); %><form method="post" action="/student/courses/<%= course.id %>/lessons/<%= currentLesson.id %>/bookmark<%= bookmarked ? "/delete" : "" %>" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-link"><%= bookmarked ? "Bỏ lưu bài học" : "Lưu bài học" %></button></form></section>
         <% if (Number(currentLesson.completed) === 1) { %>
           <form method="post" action="/student/courses/<%= course.id %>/lessons/<%= currentLesson.id %>/uncomplete">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">

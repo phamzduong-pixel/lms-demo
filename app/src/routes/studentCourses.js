@@ -6,6 +6,8 @@ const enrollmentQueries = require("../queries/enrollmentQueries");
 const progressQueries = require("../queries/progressQueries");
 const { enrollStudent, getStudentCourse } = require("../services/lmsService");
 const { parseId, renderError } = require("./routeHelpers");
+const lessonNotes = require("../queries/lessonNotesQueries");
+const bookmarks = require("../queries/lessonBookmarkQueries");
 
 const router = express.Router();
 const requireStudent = requireRole("student");
@@ -55,7 +57,7 @@ function getProgressMessage(value) {
   return "";
 }
 
-function renderStudentCourse(res, data, lessonId, message = "") {
+function renderStudentCourse(res, data, lessonId, message = "", personal = {}) {
   const completedLessons = data.lessons.filter(isCompleted).length;
   const progressPercent = data.lessons.length
     ? Math.round((completedLessons / data.lessons.length) * 100)
@@ -72,7 +74,9 @@ function renderStudentCourse(res, data, lessonId, message = "") {
     currentIndex: navigation ? navigation.currentIndex : -1,
     previousLesson: navigation && navigation.previousLesson,
     nextLesson: navigation && navigation.nextLesson,
-    message
+    message,
+    note: personal.note || null,
+    bookmarkedLessonIds: personal.bookmarkedLessonIds || []
   });
 }
 
@@ -134,7 +138,12 @@ router.get("/student/courses/:courseId/lessons/:lessonId", requireStudent, async
     return renderError(res, 404, "Không tìm thấy bài học", "Bài học không thuộc khóa học này.");
   }
 
-  return renderStudentCourse(res, data, lessonId, getProgressMessage(req.query.progress));
+  const navigation = buildLessonNavigation(data.lessons, lessonId);
+  const [note, bookmarkedLessonIds] = await Promise.all([
+    lessonNotes.findForLesson(pool, req.user.id, lessonId),
+    bookmarks.listForCourse(pool, req.user.id, courseId)
+  ]);
+  return renderStudentCourse(res, data, lessonId, getProgressMessage(req.query.progress) || (req.query.note === "saved" ? "Đã lưu ghi chú." : req.query.note === "removed" ? "Đã bỏ ghi chú." : req.query.bookmark === "saved" ? "Đã lưu bài học." : req.query.bookmark === "removed" ? "Đã bỏ lưu bài học." : ""), { note, bookmarkedLessonIds });
 });
 
 router.post("/courses/:courseId/enroll", requireStudent, verifyCsrfToken, async (req, res) => {

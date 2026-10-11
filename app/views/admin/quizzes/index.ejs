@@ -1,0 +1,41 @@
+<% const pageStyles=["admin.css","quiz.css"]; %>
+<%- include("../../header",{pageStyles}) %>
+<section class="page-heading">
+<a class="back-link" href="/admin">← Quản lý khóa học</a>
+<h1>Câu hỏi: <%= course.title %>
+</h1>
+<a class="button" href="/admin/courses/<%= course.id %>/quiz/questions/new">Tạo câu hỏi</a>
+</section>
+<% if (error) { %>
+<div class="alert error">
+<%= error %>
+</div>
+<% } %>
+<section class="admin-list">
+<% if(!questions.length){ %>
+<div class="card empty-state">Chưa có câu hỏi.</div>
+<% } %>
+<% questions.forEach((question)=>{ %>
+<article class="card">
+<h2>
+<%= question.position %>. <%= question.question_text %>
+</h2>
+<ol>
+<% question.options.forEach((option)=>{ %>
+<li>
+<%= option.option_text %> <%= Number(option.is_correct)===1?'(đúng)':'' %>
+</li>
+<% }) %>
+</ol>
+<div class="actions">
+<a class="button secondary" href="/admin/courses/<%= course.id %>/quiz/questions/<%= question.id %>/edit">Sửa</a>
+<form method="post" action="/admin/courses/<%= course.id %>/quiz/questions/<%= question.id %>/delete">
+<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<button class="button danger">Xóa</button>
+</form>
+</div>
+</article>
+<% }) %>
+</section>
+<a class="button secondary" href="/admin/courses/<%= course.id %>/quiz/results">Xem kết quả học viên</a>
+<%- include("../../footer") %>

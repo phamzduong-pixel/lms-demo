@@ -13,6 +13,11 @@ const adminCoursesRoutes = require("./routes/adminCourses");
 const adminLessonsRoutes = require("./routes/adminLessons");
 const adminStudentsRoutes = require("./routes/adminStudents");
 const healthRouter = require("./routes/health");
+const studentLearningToolsRoutes = require("./routes/studentLearningTools");
+const studentProfileRoutes = require("./routes/studentProfile");
+const studentQuizRoutes = require("./routes/studentQuiz");
+const adminQuizRoutes = require("./routes/adminQuizzes");
+const courseReviewsRoutes = require("./routes/courseReviews");
 
 if (!process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET bắt buộc phải được cấu hình");
@@ -52,6 +57,7 @@ app.use((req, res, next) => {
   res.locals.values = {};
   res.locals.queryNext = "";
   res.locals.search = "";
+  res.locals.currentPath = req.path;
   next();
 });
 
@@ -78,6 +84,11 @@ app.use("/", studentCoursesRoutes);
 app.use("/", adminCoursesRoutes);
 app.use("/", adminLessonsRoutes);
 app.use("/", adminStudentsRoutes);
+app.use("/", studentLearningToolsRoutes);
+app.use("/", studentProfileRoutes);
+app.use("/", studentQuizRoutes);
+app.use("/", adminQuizRoutes);
+app.use("/", courseReviewsRoutes);
 app.use("/", healthRouter);
 
 app.use((error, req, res, next) => {

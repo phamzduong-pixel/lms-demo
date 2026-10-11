@@ -1,16 +1,16 @@
-.admin-course, .admin-lesson, .student-course-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.admin-course, .admin-lesson, .student-course-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
 .admin-course-main { min-width: 0; }
 .admin-course-main p { margin: .4rem 0; }
 .admin-actions { justify-content: flex-end; margin-top: 0; }
 .table-card { padding: 0; overflow: hidden; }
 .table-wrap { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; text-align: left; }
-.data-table th, .data-table td { padding: 1rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.data-table th, .data-table td { padding: 1.15rem 1.25rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
 .data-table th { color: var(--muted); font-size: .84rem; font-weight: 800; }
 .data-table tr:last-child td { border-bottom: 0; }
 .table-action { text-align: right; white-space: nowrap; }
 .table-progress { display: grid; min-width: 150px; gap: .35rem; }
-.student-profile { display: flex; flex-wrap: wrap; gap: var(--space-5); }
+.student-profile { display: flex; flex-wrap: wrap; gap: var(--space-6); }
 .student-profile div { display: grid; gap: .2rem; }
 .student-course-row { align-items: flex-start; }
 .student-course-row h3 { margin: 0; }

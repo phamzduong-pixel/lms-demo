@@ -1,114 +1,61 @@
-function escapeLikeTerm(value) {
-  return value.replace(/[\\%_]/g, "\\$&");
+function escapeLikeTerm(value) { return value.replace(/[\\%_]/g, "\\$&"); }
+const levels = new Set(["beginner", "intermediate", "advanced"]);
+const orderBy = {
+  newest: "c.updated_at DESC, c.id DESC",
+  title: "c.title ASC, c.id ASC",
+  popular: "enrollment_count DESC, c.updated_at DESC, c.id DESC"
+};
+function catalogFilters(input = {}) {
+  if (typeof input === "string") input = { search: input };
+  const search = typeof input.search === "string" ? input.search.trim().slice(0, 255) : "";
+  const category = typeof input.category === "string" ? input.category.trim().slice(0, 100) : "";
+  const level = levels.has(input.level) ? input.level : "";
+  return { search, category, level, sort: orderBy[input.sort] ? input.sort : "newest" };
 }
-
-async function listPublished(pool, searchTerm = "") {
-  const values = [];
-  let searchClause = "";
-  if (typeof searchTerm === "string" && searchTerm) {
-    searchClause = " AND title LIKE ? ESCAPE '\\\\'";
-    values.push("%" + escapeLikeTerm(searchTerm) + "%");
-  }
-
+const columns = "c.id, c.title, c.description, c.category, c.level, c.cover_image_url, c.short_description, c.learning_objectives, c.status, c.created_at, c.updated_at";
+async function listPublished(pool, input = {}) {
+  const filters = catalogFilters(input), values = [], where = ["status = 'published'"];
+  if (filters.search) { where.push("c.title LIKE ? ESCAPE '\\\\'"); values.push("%" + escapeLikeTerm(filters.search) + "%"); }
+  if (filters.category) { where.push("c.category = ?"); values.push(filters.category); }
+  if (filters.level) { where.push("c.level = ?"); values.push(filters.level); }
   const [rows] = await pool.execute(
-    "SELECT id, title, description, status, created_at, updated_at FROM courses " +
-    "WHERE status = 'published'" + searchClause +
-    " ORDER BY updated_at DESC, id DESC",
-    values
+    "SELECT " + columns + ", (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS enrollment_count FROM courses c WHERE " + where.join(" AND ") + " ORDER BY " + orderBy[filters.sort], values
   );
   return rows;
 }
-
+async function listPublishedCategories(pool) {
+  const [rows] = await pool.execute("SELECT DISTINCT category FROM courses WHERE status = 'published' ORDER BY category ASC");
+  return rows.map((row) => row.category);
+}
 async function findPublishedById(pool, courseId) {
-  const [rows] = await pool.execute(
-    "SELECT id, title, description, status, created_at, updated_at FROM courses " +
-    "WHERE id = ? AND status = 'published'",
-    [courseId]
-  );
+  const [rows] = await pool.execute("SELECT " + columns + ", (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS enrollment_count FROM courses c WHERE c.id = ? AND c.status = 'published'", [courseId]);
   return rows[0] || null;
 }
-
 async function findById(pool, courseId) {
   const [rows] = await pool.execute(
-    "SELECT id, title, description, status, created_at, updated_at FROM courses WHERE id = ?",
+    "SELECT id, title, description, category, level, cover_image_url, " +
+      "short_description, learning_objectives, status, created_at, updated_at " +
+      "FROM courses WHERE id = ?",
     [courseId]
   );
   return rows[0] || null;
 }
-
 async function listForAdmin(pool) {
-  const [rows] = await pool.execute(
-    "SELECT c.id, c.title, c.description, c.status, c.created_at, c.updated_at, " +
-    "(SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id) AS lesson_count, " +
-    "(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS enrollment_count " +
-    "FROM courses c ORDER BY c.updated_at DESC, c.id DESC"
-  );
+  const [rows] = await pool.execute("SELECT " + columns + ", (SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id) AS lesson_count, (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) AS enrollment_count FROM courses c ORDER BY c.updated_at DESC, c.id DESC");
   return rows;
 }
-
 async function listEnrolledStudents(pool, courseId) {
-  const [rows] = await pool.execute(
-    "SELECT u.id, u.full_name, u.email, e.enrolled_at, " +
-    "COUNT(DISTINCT l.id) AS total_lessons, " +
-    "COUNT(DISTINCT lp.lesson_id) AS completed_lessons " +
-    "FROM enrollments e INNER JOIN users u ON u.id = e.user_id AND u.role = 'student' " +
-    "LEFT JOIN lessons l ON l.course_id = e.course_id " +
-    "LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = u.id " +
-    "WHERE e.course_id = ? " +
-    "GROUP BY u.id, u.full_name, u.email, e.enrolled_at " +
-    "ORDER BY u.full_name ASC, u.id ASC",
-    [courseId]
-  );
+  const [rows] = await pool.execute("SELECT u.id, u.full_name, u.email, e.enrolled_at, COUNT(DISTINCT l.id) AS total_lessons, COUNT(DISTINCT lp.lesson_id) AS completed_lessons FROM enrollments e INNER JOIN users u ON u.id = e.user_id AND u.role = 'student' LEFT JOIN lessons l ON l.course_id = e.course_id LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = u.id WHERE e.course_id = ? GROUP BY u.id, u.full_name, u.email, e.enrolled_at ORDER BY u.full_name ASC, u.id ASC", [courseId]);
   return rows;
 }
-
-async function create(pool, title, description) {
-  return pool.execute(
-    "INSERT INTO courses (title, description, status) VALUES (?, ?, 'draft')",
-    [title, description]
-  );
+async function create(pool, values) {
+  return pool.execute("INSERT INTO courses (title, description, category, level, cover_image_url, short_description, learning_objectives, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'draft')", [values.title, values.description, values.category, values.level, values.coverImageUrl || null, values.shortDescription || null, values.learningObjectives || null]);
 }
-
-async function update(pool, courseId, title, description) {
-  return pool.execute(
-    "UPDATE courses SET title = ?, description = ? WHERE id = ?",
-    [title, description, courseId]
-  );
+async function update(pool, courseId, values, legacyDescription) {
+  if (typeof values === "string") return pool.execute("UPDATE courses SET title = ?, description = ? WHERE id = ?", [values, legacyDescription, courseId]);
+  return pool.execute("UPDATE courses SET title = ?, description = ?, category = ?, level = ?, cover_image_url = ?, short_description = ?, learning_objectives = ? WHERE id = ?", [values.title, values.description, values.category, values.level, values.coverImageUrl || null, values.shortDescription || null, values.learningObjectives || null, courseId]);
 }
-
-async function toggleStatus(pool, courseId) {
-  return pool.execute(
-    "UPDATE courses SET status = CASE WHEN status = 'draft' THEN 'published' ELSE 'draft' END WHERE id = ?",
-    [courseId]
-  );
-}
-
-async function countEnrollments(pool, courseId) {
-  const [rows] = await pool.execute(
-    "SELECT COUNT(*) AS enrollment_count FROM enrollments WHERE course_id = ?",
-    [courseId]
-  );
-  return Number(rows[0] && rows[0].enrollment_count || 0);
-}
-
-async function removeIfNoEnrollments(pool, courseId) {
-  return pool.execute(
-    "DELETE FROM courses WHERE id = ? " +
-    "AND NOT EXISTS (SELECT 1 FROM enrollments WHERE course_id = ?)",
-    [courseId, courseId]
-  );
-}
-
-module.exports = {
-  escapeLikeTerm,
-  listPublished,
-  findPublishedById,
-  findById,
-  listForAdmin,
-  listEnrolledStudents,
-  create,
-  update,
-  toggleStatus,
-  countEnrollments,
-  removeIfNoEnrollments
-};
+async function toggleStatus(pool, courseId) { return pool.execute("UPDATE courses SET status = CASE WHEN status = 'draft' THEN 'published' ELSE 'draft' END WHERE id = ?", [courseId]); }
+async function countEnrollments(pool, courseId) { const [rows] = await pool.execute("SELECT COUNT(*) AS enrollment_count FROM enrollments WHERE course_id = ?", [courseId]); return Number(rows[0] && rows[0].enrollment_count || 0); }
+async function removeIfNoEnrollments(pool, courseId) { return pool.execute("DELETE FROM courses WHERE id = ? AND NOT EXISTS (SELECT 1 FROM enrollments WHERE course_id = ?)", [courseId, courseId]); }
+module.exports = { escapeLikeTerm, catalogFilters, listPublished, listPublishedCategories, findPublishedById, findById, listForAdmin, listEnrolledStudents, create, update, toggleStatus, countEnrollments, removeIfNoEnrollments };

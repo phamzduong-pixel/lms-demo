@@ -1,0 +1,33 @@
+<% const pageStyles=["admin.css"]; %>
+<%- include("../../header",{pageStyles}) %>
+<section class="page-heading">
+<a class="back-link" href="/admin">← Quản lý khóa học</a>
+<h1>Đánh giá: <%= course.title %>
+</h1>
+</section>
+<section class="admin-list">
+<% if(!reviews.length){ %>
+<div class="card empty-state">Chưa có đánh giá.</div>
+<% } %>
+<% reviews.forEach((review)=>{ %>
+<article class="card">
+<h2>
+<%= review.full_name %> · <%= review.rating %>/5</h2>
+<p>
+<%= review.comment %>
+</p>
+<p class="muted">
+<%= review.email %> · <%= Number(review.is_visible)===1?'Đang công khai':'Đang ẩn' %>
+</p>
+<form method="post" action="/admin/reviews/<%= review.id %>/visibility">
+<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<input type="hidden" name="course_id" value="<%= course.id %>">
+<input type="hidden" name="visible" value="<%= Number(review.is_visible)===1?0:1 %>">
+<button class="button secondary">
+<%= Number(review.is_visible)===1?'Ẩn đánh giá':'Công khai đánh giá' %>
+</button>
+</form>
+</article>
+<% }) %>
+</section>
+<%- include("../../footer") %>

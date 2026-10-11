@@ -1,0 +1,41 @@
+<% const pageStyles=["admin.css","quiz.css"]; %>
+<%- include("../../header",{pageStyles}) %>
+<section class="page-heading">
+<h1>
+<%= title %>
+</h1>
+<p>
+<%= course.title %>
+</p>
+</section>
+<section class="card narrow">
+<% if(error){ %>
+<div class="alert error">
+<%= error %>
+</div>
+<% } %>
+<form method="post" action="<%= formAction %>">
+<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+<label>Câu hỏi<textarea name="question_text" required maxlength="10000">
+<%= question.questionText || question.question_text || "" %>
+</textarea>
+</label>
+<label>Vị trí<input type="number" name="position" value="<%= question.position || "" %>" min="1" required>
+</label>
+<% [0,1,2,3].forEach((index)=>{ %>
+<label>Lựa chọn <%= index+1 %>
+<input name="option_<%= index+1 %>" value="<%= question.options[index] || "" %>" maxlength="1000" required>
+</label>
+<% }) %>
+<label>Đáp án đúng<select name="correct_option">
+<% [1,2,3,4].forEach((number)=>{ %>
+<option value="<%= number %>" <%= Number(question.correctOption)===number?'selected':'' %>>
+<%= number %>
+</option>
+<% }) %>
+</select>
+</label>
+<button class="button">Lưu câu hỏi</button>
+</form>
+</section>
+<%- include("../../footer") %>

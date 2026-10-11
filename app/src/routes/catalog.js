@@ -1,45 +1,25 @@
 const express = require("express");
 const pool = require("../db");
 const courseQueries = require("../queries/courseQueries");
+const reviewQueries = require("../queries/reviewQueries");
 const { getPublicCourse } = require("../services/lmsService");
 const { parseId, renderError } = require("./routeHelpers");
-
 const router = express.Router();
-
 router.get("/", (req, res) => res.render("home", { title: "LMS Demo" }));
-
 router.get("/courses", async (req, res) => {
-  const search = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 255) : "";
-  const courses = await courseQueries.listPublished(pool, search);
-  res.render("courses/index", { title: "Khóa học", courses, search });
+  const filters = courseQueries.catalogFilters({ search: req.query.q, category: req.query.category, level: req.query.level, sort: req.query.sort });
+  const [courses, categories] = await Promise.all([courseQueries.listPublished(pool, filters), courseQueries.listPublishedCategories(pool)]);
+  res.render("courses/index", { title: "Khóa học", courses, categories, filters, search: filters.search });
 });
-
 router.get("/courses/:courseId", async (req, res) => {
   const courseId = parseId(req.params.courseId);
   if (!courseId) return renderError(res, 404, "Không tìm thấy khóa học", "Khóa học không tồn tại.");
-
-  const data = await getPublicCourse(
-    pool,
-    courseId,
-    req.user && req.user.role === "student" ? req.user.id : null
-  );
-  if (!data) {
-    return renderError(
-      res,
-      404,
-      "Không tìm thấy khóa học",
-      "Khóa học chưa được xuất bản hoặc không tồn tại."
-    );
-  }
-
-  res.render("courses/show", {
-    title: data.course.title,
-    course: data.course,
-    lessons: data.lessons,
-    enrolled: data.enrolled,
-    message: req.query.enroll === "success" ? "Đăng ký khóa học thành công." : "",
-    error: req.query.enroll === "duplicate" ? "Bạn đã đăng ký khóa học này." : ""
-  });
+  const userId = req.user && req.user.role === "student" ? req.user.id : null;
+  const data = await getPublicCourse(pool, courseId, userId);
+  if (!data) return renderError(res, 404, "Không tìm thấy khóa học", "Khóa học chưa được xuất bản hoặc không tồn tại.");
+  const [reviewSummary, reviews, ownReview] = await Promise.all([
+    reviewQueries.getSummary(pool, courseId), reviewQueries.listPublic(pool, courseId), data.enrolled ? reviewQueries.findOwn(pool, userId, courseId) : null
+  ]);
+  res.render("courses/show", { title: data.course.title, ...data, reviewSummary, reviews, ownReview, message: req.query.enroll === "success" ? "Đăng ký khóa học thành công." : "", error: req.query.enroll === "duplicate" ? "Bạn đã đăng ký khóa học này." : "" });
 });
-
 module.exports = router;

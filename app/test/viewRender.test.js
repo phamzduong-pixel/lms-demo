@@ -104,3 +104,57 @@ test("admin course enrollment view renders progress without sensitive fields", a
   assert.match(html, /50%/);
   assert.doesNotMatch(html, /password_hash|session/i);
 });
+test("authentication views render the reference controls and escape preserved values", async () => {
+  const loginHtml = await render("login.ejs", {
+    title: "Đăng nhập",
+    currentUser: null,
+    currentPath: "/login",
+    values: { email: "<user@example.test>", remember: true },
+    queryNext: ""
+  });
+  const registerHtml = await render("register.ejs", {
+    title: "Đăng ký học viên",
+    currentUser: null,
+    currentPath: "/register",
+    values: { full_name: "Học viên", email: "student@example.test" }
+  });
+
+  assert.match(loginHtml, /name="remember"/);
+  assert.match(loginHtml, /href="\/forgot-password"/);
+  assert.match(loginHtml, /data-password-toggle/);
+  assert.match(loginHtml, /&lt;user@example\.test&gt;/);
+  assert.match(loginHtml, /aria-current="page"/);
+  assert.match(registerHtml, /name="confirm_password"/);
+  assert.match(registerHtml, /\/css\/auth\.css/);
+  assert.match(registerHtml, /\/js\/auth\.js/);
+});
+
+test("password recovery views render CSRF forms and hide an invalid reset form", async () => {
+  const forgotHtml = await render("forgot-password.ejs", {
+    title: "Quên mật khẩu",
+    currentUser: null,
+    currentPath: "/forgot-password",
+    values: { email: "" }
+  });
+  const resetHtml = await render("reset-password.ejs", {
+    title: "Đặt lại mật khẩu",
+    currentUser: null,
+    currentPath: "/reset-password",
+    token: "signed-token",
+    tokenValid: true
+  });
+  const invalidHtml = await render("reset-password.ejs", {
+    title: "Đặt lại mật khẩu",
+    currentUser: null,
+    currentPath: "/reset-password",
+    error: "Liên kết không hợp lệ",
+    token: "",
+    tokenValid: false
+  });
+
+  assert.match(forgotHtml, /action="\/forgot-password"/);
+  assert.match(forgotHtml, /name="_csrf"/);
+  assert.match(resetHtml, /action="\/reset-password"/);
+  assert.match(resetHtml, /value="signed-token"/);
+  assert.doesNotMatch(invalidHtml, /name="password"/);
+});

@@ -1,0 +1,45 @@
+<% const pageStyles=["admin.css","quiz.css"]; %>
+<%- include("../../header",{pageStyles}) %>
+<section class="page-heading">
+<a class="back-link" href="/admin/courses/<%= course.id %>/quiz">← Câu hỏi</a>
+<h1>Kết quả: <%= course.title %>
+</h1>
+</section>
+<section class="card">
+<% if(!attempts.length){ %>
+<p>Chưa có lượt làm bài.</p>
+<% }else{ %>
+<table>
+<thead>
+<tr>
+<th>Học viên</th>
+<th>Thời gian</th>
+<th>Đúng</th>
+<th>Điểm</th>
+</tr>
+</thead>
+<tbody>
+<% attempts.forEach((a)=>{ %>
+<tr>
+<td>
+<%= a.full_name %>
+<br>
+<small>
+<%= a.email %>
+</small>
+</td>
+<td>
+<%= a.submitted_at %>
+</td>
+<td>
+<%= a.correct_count %>/<%= a.total_questions %>
+</td>
+<td>
+<%= a.score %>%</td>
+</tr>
+<% }) %>
+</tbody>
+</table>
+<% } %>
+</section>
+<%- include("../../footer") %>
