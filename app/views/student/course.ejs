@@ -1,5 +1,5 @@
 <% const pageStyles = ["student.css"]; const lessonNote = typeof note !== "undefined" ? note : null; const savedLessonIds = typeof bookmarkedLessonIds !== "undefined" ? bookmarkedLessonIds : []; %>
-<%- include("../header") %>
+<%- include("../header", { pageStyles }) %>
 <section class="page-heading">
   <a class="back-link" href="/student">← Học của tôi</a>
   <p class="eyebrow">Đang học</p>

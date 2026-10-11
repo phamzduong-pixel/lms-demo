@@ -1,5 +1,5 @@
 <% const pageStyles = ["admin.css"]; %>
-<%- include("../../header") %>
+<%- include("../../header", { pageStyles }) %>
 <section class="page-heading">
   <a class="back-link" href="/admin/courses/<%= course.id %>/lessons">← Danh sách bài học</a>
   <h1><%= heading %></h1>

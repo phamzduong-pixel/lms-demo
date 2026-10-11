@@ -159,17 +159,17 @@ async function createAttempt(
   courseId,
   correct,
   total,
-  score
+  score,
+  submissionKey
 ) {
   const [result] = await connection.execute(
     "INSERT INTO quiz_attempts " +
-      "(user_id, course_id, correct_count, total_questions, score) " +
-      "VALUES (?, ?, ?, ?, ?)",
-    [userId, courseId, correct, total, score]
+      "(user_id, course_id, correct_count, total_questions, score, submission_key) " +
+      "VALUES (?, ?, ?, ?, ?, ?)",
+    [userId, courseId, correct, total, score, submissionKey]
   );
   return result.insertId;
 }
-
 async function saveAnswer(connection, attemptId, questionId, optionId, isCorrect) {
   return connection.execute(
     "INSERT INTO quiz_attempt_answers " +
@@ -197,6 +197,14 @@ async function findAttempt(pool, userId, courseId, attemptId) {
   return rows[0] || null;
 }
 
+async function findAttemptBySubmissionKey(pool, userId, courseId, submissionKey) {
+  const [rows] = await pool.execute(
+    "SELECT id FROM quiz_attempts WHERE user_id = ? AND course_id = ? " +
+      "AND submission_key = ?",
+    [userId, courseId, submissionKey]
+  );
+  return rows[0] || null;
+}
 async function attemptAnswers(pool, attemptId) {
   const [rows] = await pool.execute(
     "SELECT q.question_text, qo.option_text AS selected_option, " +
@@ -233,6 +241,7 @@ module.exports = {
   saveAnswer,
   listAttempts,
   findAttempt,
+  findAttemptBySubmissionKey,
   attemptAnswers,
   listResultsForAdmin,
   hasSubmittedAnswers,

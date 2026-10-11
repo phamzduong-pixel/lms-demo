@@ -158,3 +158,38 @@ test("password recovery views render CSRF forms and hide an invalid reset form",
   assert.match(resetHtml, /value="signed-token"/);
   assert.doesNotMatch(invalidHtml, /name="password"/);
 });
+
+test("quiz view renders separate radio groups and never exposes answer metadata", async () => {
+  const html = await render("student/quiz.ejs", {
+    title: "Quiz",
+    currentPath: "/student/courses/2/quiz",
+    course: { id: 2, title: "Course" },
+    submissionKey: "b".repeat(64),
+    selectedAnswers: { 10: 102 },
+    questions: [
+      {
+        id: 10,
+        question_text: "First question",
+        options: [
+          { id: 101, option_text: "First option", is_correct: 1 },
+          { id: 102, option_text: "Second option", is_correct: 0 }
+        ]
+      },
+      {
+        id: 11,
+        question_text: "Second question",
+        options: [
+          { id: 111, option_text: "Third option", is_correct: 0 },
+          { id: 112, option_text: "Fourth option", is_correct: 1 }
+        ]
+      }
+    ]
+  });
+
+  assert.match(html, /name="answers\[10\]"/);
+  assert.match(html, /name="answers\[11\]"/);
+  assert.match(html, /id="option-10-102"[^>]*checked/);
+  assert.match(html, /for="option-10-102"/);
+  assert.match(html, /name="submission_key" value="b{64}"/);
+  assert.doesNotMatch(html, /is_correct/);
+});

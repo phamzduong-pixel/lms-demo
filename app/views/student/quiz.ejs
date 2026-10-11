@@ -1,38 +1,38 @@
-<% const pageStyles=["student.css","quiz.css"]; %>
-<%- include("../header",{pageStyles}) %>
-<section class="page-heading">
-<a class="back-link" href="/student/courses/<%= course.id %>">← <%= course.title %>
-</a>
-<h1>Bài kiểm tra</h1>
-<p>Mỗi lần nộp được lưu là một lượt làm; bạn có thể làm lại.</p>
+<% const pageStyles = ["student.css", "quiz.css"]; const pageScripts = ["quiz.js"]; %>
+<%- include("../header", { pageStyles }) %>
+<section class="page-heading quiz-heading">
+  <a class="back-link" href="/student/courses/<%= course.id %>">← <%= course.title %></a>
+  <h1>Bài kiểm tra</h1>
+  <p>Mỗi lần nộp được lưu thành một lượt làm. Bạn có thể làm lại sau khi xem kết quả.</p>
 </section>
-<% if(error){ %>
-<div class="alert error">
-<%= error %>
-</div>
+<% if (error) { %><div class="alert error" role="alert" data-quiz-error><%= error %></div><% } %>
+<% if (!questions.length) { %>
+  <section class="card empty-state"><h2>Chưa có câu hỏi</h2><p>Quản trị viên chưa tạo bài kiểm tra cho khóa học này.</p></section>
+<% } else { %>
+  <form class="quiz-form" method="post" action="/student/courses/<%= course.id %>/quiz" novalidate data-quiz-form>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="submission_key" value="<%= submissionKey %>">
+    <section class="card quiz-overview" aria-label="Tiến độ bài kiểm tra">
+      <div><strong data-answer-count>Đã trả lời 0/<%= questions.length %> câu</strong><p class="muted" data-quiz-status>Chọn một đáp án cho mỗi câu trước khi nộp.</p></div>
+      <progress value="0" max="<%= questions.length %>" data-quiz-progress></progress>
+      <nav class="quiz-question-nav" aria-label="Đi tới câu hỏi"><% questions.forEach((question, index) => { %><a href="#quiz-question-<%= question.id %>" data-question-link="<%= question.id %>"><%= index + 1 %></a><% }) %></nav>
+    </section>
+    <section class="quiz-questions">
+      <% questions.forEach((question, index) => { %>
+        <fieldset class="card quiz-question" id="quiz-question-<%= question.id %>" data-question-id="<%= question.id %>">
+          <legend>Câu <%= index + 1 %>. <%= question.question_text %></legend>
+          <div class="quiz-options">
+            <% question.options.forEach((option) => { const optionId = "option-" + question.id + "-" + option.id; const checked = Number(selectedAnswers[question.id]) === Number(option.id); %>
+              <label class="quiz-option <%= checked ? "is-selected" : "" %>" for="<%= optionId %>">
+                <input id="<%= optionId %>" type="radio" name="answers[<%= question.id %>]" value="<%= option.id %>" <%= checked ? "checked" : "" %>>
+                <span class="quiz-option-control" aria-hidden="true"></span><span class="quiz-option-text"><%= option.option_text %></span>
+              </label>
+            <% }) %>
+          </div>
+        </fieldset>
+      <% }) %>
+    </section>
+    <div class="quiz-submit-row"><button class="button" type="submit" data-quiz-submit>Nộp bài</button><a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Lịch sử làm bài</a></div>
+  </form>
 <% } %>
-<% if(!questions.length){ %>
-<section class="card empty-state">
-<h2>Chưa có câu hỏi</h2>
-<p>Quản trị viên chưa tạo bài kiểm tra cho khóa học này.</p>
-</section>
-<% }else{ %>
-<form class="quiz-form" method="post" action="/student/courses/<%= course.id %>/quiz">
-<input type="hidden" name="_csrf" value="<%= csrfToken %>">
-<% questions.forEach((question,index)=>{ %>
-<fieldset class="card">
-<legend>Câu <%= index+1 %>. <%= question.question_text %>
-</legend>
-<% question.options.forEach((option)=>{ %>
-<label class="option">
-<input type="radio" name="answers[<%= question.id %>]" value="<%= option.id %>" required>
-<%= option.option_text %>
-</label>
-<% }) %>
-</fieldset>
-<% }) %>
-<button class="button">Nộp bài</button>
-<a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Lịch sử làm bài</a>
-</form>
-<% } %>
-<%- include("../footer") %>
+<%- include("../footer", { pageScripts }) %>

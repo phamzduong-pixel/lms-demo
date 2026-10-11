@@ -109,6 +109,8 @@ CREATE TABLE quiz_attempts (
   correct_count INT UNSIGNED NOT NULL,
   total_questions INT UNSIGNED NOT NULL,
   score DECIMAL(5,2) NOT NULL,
+  submission_key CHAR(64) NOT NULL,
+  UNIQUE KEY uq_quiz_attempt_submission_key (submission_key),
   INDEX idx_quiz_attempts_course_user (course_id, user_id, submitted_at),
   CONSTRAINT fk_quiz_attempts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_quiz_attempts_course FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE

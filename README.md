@@ -323,3 +323,8 @@ npm test
 ```
 
 Nếu sau này triển khai HTTPS phía trước Nginx, cần cấu hình HTTPS và trust proxy phù hợp rồi mới đổi `COOKIE_SECURE=true`.
+
+
+### Quiz submission key migration
+
+After migration 001 has been applied, run database/migrations/002_quiz_submission_key.sql exactly once before deploying the idempotent quiz submission update. It preserves existing attempt history by assigning a distinct key to each existing attempt before adding the unique constraint.

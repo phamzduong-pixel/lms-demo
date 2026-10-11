@@ -1,6 +1,6 @@
 const quizQueries = require("../queries/quizQueries");
 
-async function submitQuiz(pool, userId, courseId, answers = {}) {
+async function submitQuiz(pool, userId, courseId, answers = {}, submissionKey) {
   const questions = await quizQueries.listForCourse(pool, courseId, true);
   if (!questions.length) return { ok: false, reason: "empty" };
 
@@ -28,7 +28,8 @@ async function submitQuiz(pool, userId, courseId, answers = {}) {
       courseId,
       correct,
       questions.length,
-      score
+      score,
+      submissionKey
     );
     for (const answer of selected) {
       await quizQueries.saveAnswer(
@@ -43,6 +44,15 @@ async function submitQuiz(pool, userId, courseId, answers = {}) {
     return { ok: true, attemptId };
   } catch (error) {
     await connection.rollback();
+    if (error.code === "ER_DUP_ENTRY") {
+      const existing = await quizQueries.findAttemptBySubmissionKey(
+        pool,
+        userId,
+        courseId,
+        submissionKey
+      );
+      if (existing) return { ok: true, attemptId: existing.id, duplicate: true };
+    }
     throw error;
   } finally {
     connection.release();
