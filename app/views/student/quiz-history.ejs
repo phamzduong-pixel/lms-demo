@@ -1,19 +1,21 @@
 <% const pageStyles=["student.css","quiz.css"]; %>
 <%- include("../header",{pageStyles}) %>
 <section class="page-heading">
-<a class="back-link" href="/student/courses/<%= course.id %>/quiz">← Bài kiểm tra</a>
+<a class="back-link" href="/student/courses/<%= course.id %>">← Quay lại khóa học</a>
 <h1>Lịch sử làm bài</h1>
+<p class="lead">Bài kiểm tra: <strong><%= course.title %></strong> · Các lượt làm được sắp xếp mới nhất.</p>
 </section>
-<section class="card">
+<section class="card table-card history-card" aria-label="Lịch sử bài kiểm tra">
 <% if(!attempts.length){ %>
-<p>Chưa có lượt làm bài.</p>
+<div class="empty-state history-empty"><p>Chưa có lượt làm bài cho bài kiểm tra này.</p><a class="button secondary" href="/student/courses/<%= course.id %>">Quay lại khóa học</a></div>
 <% }else{ %>
-<table>
+<div class="table-wrap"><table class="data-table">
 <thead>
 <tr>
-<th>Thời gian</th>
-<th>Kết quả</th>
-<th>Điểm</th>
+<th scope="col">Bài kiểm tra</th>
+<th scope="col">Thời gian nộp</th>
+<th scope="col">Kết quả</th>
+<th scope="col">Điểm</th>
 <th>
 </th>
 </tr>
@@ -21,21 +23,22 @@
 <tbody>
 <% attempts.forEach((attempt)=>{ %>
 <tr>
-<td>
-<%= attempt.submitted_at %>
+<td class="history-title-cell" data-label="Bài kiểm tra"><strong><%= course.title %></strong><small class="muted">Bài kiểm tra khóa học</small></td>
+<td data-label="Thời gian nộp">
+<%= attempt.submitted_at_label || attempt.submitted_at %>
 </td>
-<td>
+<td class="history-result" data-label="Kết quả">
 <%= attempt.correct_count %>/<%= attempt.total_questions %>
 </td>
-<td>
+<td class="history-score" data-label="Điểm">
 <%= attempt.score %>%</td>
-<td>
-<a href="/student/courses/<%= course.id %>/quiz/attempts/<%= attempt.id %>">Xem</a>
+<td class="table-action" data-label="Thao tác">
+<a class="button secondary table-button" href="/student/courses/<%= course.id %>/quiz/attempts/<%= attempt.id %>">Xem kết quả</a>
 </td>
 </tr>
 <% }) %>
 </tbody>
-</table>
+</table></div>
 <% } %>
 </section>
 <%- include("../footer") %>

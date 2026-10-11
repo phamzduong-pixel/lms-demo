@@ -1,8 +1,16 @@
-  </main>
-  <footer>© LMS Demo · Nền tảng học trực tuyến rõ ràng và thân thiện.</footer>
-  <% const requestedScripts = typeof pageScripts !== "undefined" && Array.isArray(pageScripts) ? pageScripts : []; %>
-  <% requestedScripts.forEach((script) => { %>
-    <script src="/js/<%= script %>" defer></script>
-  <% }) %>
-</body>
-</html>
+  <footer class="site-footer">
+    <p>© LMS Demo · Nền tảng học trực tuyến rõ ràng và thân thiện.</p>
+    <nav class="footer-links" aria-label="Liên kết cuối trang">
+      <a href="/">Trang chủ</a>
+      <a href="/courses">Khóa học</a>
+      <% if (currentUser && currentUser.role === "student") { %><a href="/student">Học của tôi</a><% } %>
+      <% if (currentUser && currentUser.role === "teacher") { %><a href="/teacher">Giảng dạy</a><% } %>
+      <% if (currentUser && currentUser.role === "admin") { %><a href="/admin">Quản trị</a><% } %>
+      <% if (!currentUser) { %><a href="/login">Đăng nhập</a><a href="/register">Đăng ký</a><% } %>
+    </nav>
+  </footer>
+
+<% const requestedScripts = typeof pageScripts !== "undefined" && Array.isArray(pageScripts) ? pageScripts : []; %>
+<% requestedScripts.forEach((script) => { %>
+  <script src="/js/<%= script %>" defer></script>
+<% }) %>

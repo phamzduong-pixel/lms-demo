@@ -1,0 +1,56 @@
+<% const pageStyles = ["admin.css", "teacher.css"]; %>
+<%- include("../header", { pageStyles }) %>
+
+<section class="page-heading split-heading teacher-heading">
+  <div>
+    <p class="eyebrow">Khu vực giáo viên</p>
+    <h1>Khóa học được phân công</h1>
+    <p>Quản lý nội dung, học viên và kết quả trong phạm vi các khóa học của bạn.</p>
+  </div>
+  <a class="button" href="/teacher/courses/new">Tạo khóa học</a>
+</section>
+
+<section class="teacher-stats" aria-label="Tổng quan giảng dạy">
+  <article class="card teacher-stat"><span>Khóa học phụ trách</span><strong><%= stats.courseCount %></strong></article>
+  <article class="card teacher-stat"><span>Đã xuất bản</span><strong><%= stats.publishedCount %></strong></article>
+  <article class="card teacher-stat"><span>Lượt đăng ký</span><strong><%= stats.studentCount %></strong></article>
+  <article class="card teacher-stat"><span>Đánh giá</span><strong><%= stats.reviewCount %></strong></article>
+</section>
+
+<% if (!courses.length) { %>
+  <section class="card empty-state">
+    <h2>Chưa có khóa học được phân công</h2>
+    <p>Admin cần phân công khóa học trước khi bạn có thể quản lý nội dung.</p>
+  </section>
+<% } else { %>
+  <section class="teacher-course-grid" aria-label="Danh sách khóa học">
+    <% courses.forEach((course) => { %>
+      <article class="card teacher-course-card">
+        <div class="section-heading">
+          <h2><%= course.title %></h2>
+          <span class="badge <%= course.status === "published" ? "published" : "draft" %>">
+            <%= course.status === "published" ? "Đã xuất bản" : "Bản nháp" %>
+          </span>
+        </div>
+        <p class="muted"><%= course.short_description || course.description || "Chưa có mô tả." %></p>
+        <p class="teacher-course-meta"><%= course.lesson_count %> bài học · <%= course.enrollment_count %> học viên · <%= course.review_count %> đánh giá</p>
+        <div class="actions teacher-course-actions">
+          <a class="button secondary" href="/teacher/courses/<%= course.id %>/lessons">Bài học</a>
+          <a class="button secondary" href="/teacher/courses/<%= course.id %>/quiz">Quiz</a>
+          <a class="button secondary" href="/teacher/courses/<%= course.id %>/students">Học viên</a>
+          <a class="button secondary" href="/teacher/courses/<%= course.id %>/quiz/results">Kết quả</a>
+          <a class="button ghost" href="/teacher/courses/<%= course.id %>/edit">Sửa thông tin</a>
+        </div>
+        <form method="post" action="/teacher/courses/<%= course.id %>/toggle-status" class="teacher-status-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="button <%= course.status === "published" ? "secondary" : "" %>" type="submit">
+            <%= course.status === "published" ? "Chuyển thành nháp" : "Xuất bản" %>
+          </button>
+          <a class="text-link" href="/teacher/courses/<%= course.id %>/reviews">Xem đánh giá</a>
+        </form>
+      </article>
+    <% }) %>
+  </section>
+<% } %>
+
+<%- include("../footer") %>

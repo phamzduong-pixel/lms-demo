@@ -1,0 +1,59 @@
+<% const pageStyles = ["admin.css", "quiz.css"]; %>
+<% const basePath = typeof managementBasePath !== "undefined" && managementBasePath ? managementBasePath : "/admin"; %>
+<%- include("../../header", { pageStyles }) %>
+<section class="page-heading">
+  <a class="back-link" href="<%= basePath %>/courses/<%= course.id %>/quiz/results">← Kết quả quiz</a>
+  <p class="eyebrow">Chi tiết lượt làm</p>
+  <h1><%= course.title %></h1>
+</section>
+
+<section class="card attempt-summary">
+  <div>
+    <span class="muted">Học viên</span>
+    <strong><%= attempt.full_name %></strong>
+    <span class="muted"><%= attempt.email %></span>
+  </div>
+  <div>
+    <span class="muted">Thời điểm nộp</span>
+    <strong><%= attempt.submitted_at_label %></strong>
+  </div>
+  <div>
+    <span class="muted">Kết quả</span>
+    <strong><%= attempt.correct_count %>/<%= attempt.total_questions %> câu đúng · <%= attempt.score %>%</strong>
+  </div>
+</section>
+
+<section class="attempt-answers">
+  <div class="section-heading">
+    <h2>Đáp án từng câu</h2>
+    <span class="muted"><%= answers.length %> câu đã lưu</span>
+  </div>
+  <% if (!answers.length) { %>
+    <section class="card empty-state">Không có dữ liệu đáp án cho lượt làm này.</section>
+  <% } %>
+  <% answers.forEach((answer, index) => { %>
+    <article class="card attempt-answer <%= Number(answer.is_correct) === 1 ? 'is-correct' : 'is-wrong' %>">
+      <div class="section-heading">
+        <h3>Câu <%= index + 1 %>. <%= answer.question_text %></h3>
+        <span class="badge <%= Number(answer.is_correct) === 1 ? 'complete' : 'empty' %>">
+          <%= Number(answer.is_correct) === 1 ? "Đúng" : "Sai" %>
+        </span>
+      </div>
+      <dl class="answer-detail">
+        <div>
+          <dt>Lựa chọn của học viên</dt>
+          <dd><%= answer.selected_option %></dd>
+        </div>
+        <div>
+          <dt>Đáp án đúng</dt>
+          <dd><%= answer.correct_option || "Chưa xác định" %></dd>
+        </div>
+      </dl>
+    </article>
+  <% }) %>
+</section>
+
+<section class="card notice">
+  <p class="muted">Điểm và trạng thái đúng/sai được lấy từ bản ghi đã nộp. Ứng dụng khóa sửa/xóa câu hỏi đã có lịch sử, nhưng schema hiện tại chưa lưu snapshot riêng cho toàn bộ văn bản câu hỏi và lựa chọn.</p>
+</section>
+<%- include("../../footer") %>

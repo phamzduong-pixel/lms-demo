@@ -1,8 +1,9 @@
-<% const pageStyles = []; %>
+<% const pageStyles = []; const destination = typeof homeHref !== "undefined" && homeHref ? homeHref : "/"; const destinationLabel = typeof homeLabel !== "undefined" && homeLabel ? homeLabel : "Về trang chủ"; %>
 <%- include("header", { pageStyles }) %>
-<section class="card">
+<section class="card error-page">
+  <p class="eyebrow">LMS Demo</p>
   <h1><%= title %></h1>
   <p><%= message %></p>
-  <a href="/">Về trang chủ</a>
+  <a class="button" href="<%= destination %>"><%= destinationLabel %></a>
 </section>
 <%- include("footer") %>

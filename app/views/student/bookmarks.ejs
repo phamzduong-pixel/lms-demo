@@ -1,0 +1,78 @@
+<% const pageStyles = ["student.css"]; %>
+<%- include("../header", { pageStyles }) %>
+<section class="page-heading split-heading">
+  <div>
+    <p class="eyebrow">Ghi nhớ khi học</p>
+    <h1>Bài học đã lưu</h1>
+    <p>Danh sách chỉ gồm bài trong khóa học bạn đang đăng ký và đang được xuất bản.</p>
+  </div>
+  <a class="button secondary" href="/student">Học của tôi</a>
+</section>
+
+<section class="card bookmark-toolbar">
+  <form method="get" action="/student/bookmarks" class="bookmark-filter-form">
+    <label>
+      Tìm bài học hoặc khóa học
+      <input type="search" name="q" value="<%= search %>" maxlength="120" placeholder="Ví dụ: JavaScript">
+    </label>
+    <label>
+      Sắp xếp
+      <select name="sort">
+        <option value="recent" <%= sort === "recent" ? "selected" : "" %>>Mới lưu trước</option>
+        <option value="lesson" <%= sort === "lesson" ? "selected" : "" %>>Tên bài học</option>
+        <option value="course" <%= sort === "course" ? "selected" : "" %>>Tên khóa học</option>
+      </select>
+    </label>
+    <button class="button" type="submit">Lọc</button>
+    <% if (search || sort !== "recent") { %>
+      <a class="button ghost" href="/student/bookmarks">Xóa lọc</a>
+    <% } %>
+  </form>
+</section>
+
+<% if (!bookmarks.length) { %>
+  <section class="card empty-state">
+    <h2><%= search ? "Không tìm thấy bài học phù hợp" : "Chưa có bài học được lưu" %></h2>
+    <p><%= search ? "Hãy thử từ khóa khác hoặc xóa bộ lọc." : "Mở một bài học và chọn “Lưu bài học” để truy cập nhanh tại đây." %></p>
+    <a class="button secondary" href="<%= search ? '/student/bookmarks' : '/student' %>"><%= search ? "Xem tất cả bài đã lưu" : "Về khóa học của tôi" %></a>
+  </section>
+<% } else { %>
+  <section class="bookmark-list" aria-label="Danh sách bài học đã lưu">
+    <% bookmarks.forEach((bookmark) => { %>
+      <article class="card bookmark-item">
+        <div class="bookmark-item-content">
+          <span class="badge published"><%= bookmark.course_title %></span>
+          <h2><%= bookmark.lesson_title %></h2>
+          <p class="muted">Đã lưu <%= bookmark.created_at_label %></p>
+        </div>
+        <div class="actions bookmark-actions">
+          <a class="button small" href="/student/courses/<%= bookmark.course_id %>/lessons/<%= bookmark.lesson_id %>">Mở bài học</a>
+          <form method="post" action="/student/bookmarks/<%= bookmark.lesson_id %>/delete" class="inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="q" value="<%= search %>">
+            <input type="hidden" name="sort" value="<%= sort %>">
+            <input type="hidden" name="page" value="<%= pagination.currentPage %>">
+            <button class="button ghost small" type="submit">Bỏ lưu</button>
+          </form>
+        </div>
+      </article>
+    <% }) %>
+  </section>
+
+  <% if (pagination.totalPages > 1) { %>
+    <nav class="pagination bookmark-pagination" aria-label="Phân trang bài học đã lưu">
+      <% if (pagination.currentPage > 1) { %>
+        <a class="button ghost small" href="/student/bookmarks?<%= pagination.previousQuery %>">← Trước</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+      <span>Trang <strong><%= pagination.currentPage %></strong>/<%= pagination.totalPages %> · <%= pagination.totalItems %> bài</span>
+      <% if (pagination.currentPage < pagination.totalPages) { %>
+        <a class="button ghost small" href="/student/bookmarks?<%= pagination.nextQuery %>">Sau →</a>
+      <% } else { %>
+        <span></span>
+      <% } %>
+    </nav>
+  <% } %>
+<% } %>
+<%- include("../footer") %>

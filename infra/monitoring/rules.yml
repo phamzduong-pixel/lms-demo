@@ -1,0 +1,112 @@
+groups:
+  - name: lms-infrastructure
+    rules:
+      - alert: HostHighCPU
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU máy chủ cao"
+          description: "CPU trên {{ $labels.instance }} vượt 85% trong 5 phút."
+
+      - alert: HostHighMemory
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM máy chủ cao"
+          description: "RAM trên {{ $labels.instance }} vượt 90% trong 5 phút."
+
+      - alert: ContainerHighCPU
+        expr: 100 * sum by (name) (rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service!=""}[5m])) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container dùng CPU cao"
+          description: "Container {{ $labels.name }} vượt ngưỡng CPU 85%."
+
+      - alert: ContainerHighMemory
+        expr: 100 * container_memory_usage_bytes{container_label_com_docker_compose_service!=""} / clamp_min(container_spec_memory_limit_bytes{container_label_com_docker_compose_service!=""}, 1) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container dùng RAM cao"
+          description: "Container {{ $labels.name }} vượt ngưỡng RAM 90%."
+
+      - alert: LmsHealthFailed
+        expr: probe_success{job="lms-health"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "LMS health check thất bại"
+          description: "Nginx không nhận được phản hồi health hợp lệ từ LMS trong 1 phút."
+
+      - alert: MysqlExporterDown
+        expr: up{job="mysql"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL exporter không hoạt động"
+          description: "Không scrape được MySQL exporter trong 1 phút."
+
+      - alert: MonitoringTargetMissing
+        expr: absent(up{job=~"node|cadvisor|mysql|nginx|lms-health"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Thiếu monitoring target"
+          description: "Một hoặc nhiều target giám sát không còn xuất hiện trong Prometheus."
+
+
+      - alert: NodeExporterMissing
+        expr: absent(up{job="node"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node exporter target mất"
+          description: "Prometheus không còn scrape được node exporter."
+
+      - alert: ContainerExporterMissing
+        expr: absent(up{job="cadvisor"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container exporter target mất"
+          description: "Prometheus không còn scrape được cAdvisor."
+
+      - alert: NginxExporterMissing
+        expr: absent(up{job="nginx"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx exporter target mất"
+          description: "Prometheus không còn scrape được Nginx exporter."
+
+      - alert: LmsHealthTargetMissing
+        expr: absent(up{job="lms-health"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "LMS health target mất"
+          description: "Prometheus không còn scrape được health probe của LMS."
+
+
+      - alert: MysqlExporterMissing
+        expr: absent(up{job="mysql"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL exporter target mất"
+          description: "Prometheus không còn thấy MySQL exporter."

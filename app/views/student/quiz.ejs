@@ -1,7 +1,7 @@
-<% const pageStyles = ["student.css", "quiz.css"]; const pageScripts = ["quiz.js"]; %>
+<% const pageStyles = ["student.css", "quiz.css"]; const pageScripts = ["quiz.js"]; const quizMissingQuestionIds = typeof missingQuestionIds !== "undefined" && Array.isArray(missingQuestionIds) ? missingQuestionIds : []; %>
 <%- include("../header", { pageStyles }) %>
 <section class="page-heading quiz-heading">
-  <a class="back-link" href="/student/courses/<%= course.id %>">← <%= course.title %></a>
+  <a class="back-link" href="/student/courses/<%= course.id %>">← Quay lại khóa học</a>
   <h1>Bài kiểm tra</h1>
   <p>Mỗi lần nộp được lưu thành một lượt làm. Bạn có thể làm lại sau khi xem kết quả.</p>
 </section>
@@ -13,13 +13,13 @@
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <input type="hidden" name="submission_key" value="<%= submissionKey %>">
     <section class="card quiz-overview" aria-label="Tiến độ bài kiểm tra">
-      <div><strong data-answer-count>Đã trả lời 0/<%= questions.length %> câu</strong><p class="muted" data-quiz-status>Chọn một đáp án cho mỗi câu trước khi nộp.</p></div>
+      <div><strong data-answer-count>Đã trả lời 0/<%= questions.length %> câu</strong><p class="muted" data-quiz-status role="status" aria-live="polite">Chọn một đáp án cho mỗi câu trước khi nộp.</p></div>
       <progress value="0" max="<%= questions.length %>" data-quiz-progress></progress>
       <nav class="quiz-question-nav" aria-label="Đi tới câu hỏi"><% questions.forEach((question, index) => { %><a href="#quiz-question-<%= question.id %>" data-question-link="<%= question.id %>"><%= index + 1 %></a><% }) %></nav>
     </section>
     <section class="quiz-questions">
       <% questions.forEach((question, index) => { %>
-        <fieldset class="card quiz-question" id="quiz-question-<%= question.id %>" data-question-id="<%= question.id %>">
+        <fieldset class="card quiz-question <%= quizMissingQuestionIds.includes(Number(question.id)) ? "has-missing-answer" : "" %>" id="quiz-question-<%= question.id %>" data-question-id="<%= question.id %>">
           <legend>Câu <%= index + 1 %>. <%= question.question_text %></legend>
           <div class="quiz-options">
             <% question.options.forEach((option) => { const optionId = "option-" + question.id + "-" + option.id; const checked = Number(selectedAnswers[question.id]) === Number(option.id); %>
@@ -33,6 +33,18 @@
       <% }) %>
     </section>
     <div class="quiz-submit-row"><button class="button" type="submit" data-quiz-submit>Nộp bài</button><a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Lịch sử làm bài</a></div>
+    <div class="quiz-confirm" data-quiz-confirm hidden>
+      <div class="quiz-confirm-backdrop" data-quiz-confirm-cancel></div>
+      <section class="quiz-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="quiz-confirm-title" aria-describedby="quiz-confirm-copy">
+        <p class="eyebrow">Kiểm tra bài làm</p>
+        <h2 id="quiz-confirm-title">Xác nhận nộp bài?</h2>
+        <p id="quiz-confirm-copy" data-quiz-confirm-copy>Bạn đã trả lời đầy đủ các câu hỏi.</p>
+        <div class="quiz-confirm-actions">
+          <button class="button secondary" type="button" data-quiz-confirm-cancel>Quay lại</button>
+          <button class="button" type="button" data-quiz-confirm-submit>Nộp bài</button>
+        </div>
+      </section>
+    </div>
   </form>
 <% } %>
 <%- include("../footer", { pageScripts }) %>

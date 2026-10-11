@@ -1,9 +1,12 @@
 <% const pageStyles = ["student.css"]; %>
 <%- include("../header", { pageStyles }) %>
-<section class="page-heading">
-  <p class="eyebrow">Khu vực học viên</p>
-  <h1>Học của tôi</h1>
-  <p>Theo dõi tiến độ và tiếp tục bài học dang dở một cách nhanh chóng.</p>
+<section class="page-heading split-heading">
+  <div>
+    <p class="eyebrow">Khu vực học viên</p>
+    <h1>Học của tôi</h1>
+    <p>Theo dõi tiến độ và tiếp tục bài học dang dở một cách nhanh chóng.</p>
+  </div>
+  <a class="button secondary" href="/student/bookmarks">Bài học đã lưu</a>
 </section>
 <% if (hasAnyCourses) { %>
   <nav class="filter-tabs" aria-label="Lọc khóa học">

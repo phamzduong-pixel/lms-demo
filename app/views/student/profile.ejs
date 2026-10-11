@@ -1,34 +1,44 @@
-<% const pageStyles=["student.css","profile.css"]; %>
-<%- include("../header",{pageStyles}) %>
+<% const pageStyles = ["student.css", "profile.css"]; %>
+<%- include("../header", { pageStyles }) %>
 <section class="page-heading">
-<p class="eyebrow">Tài khoản</p>
-<h1>Hồ sơ học viên</h1>
+  <p class="eyebrow">Tài khoản</p>
+  <h1>Hồ sơ học viên</h1>
+  <p>Cập nhật tên hiển thị và bảo mật tài khoản của bạn.</p>
 </section>
-<section class="card narrow">
-<% if(error){ %>
-<div class="alert error">
-<%= error %>
-</div>
-<% } %>
-<% if(message){ %>
-<div class="alert success">
-<%= message %>
-</div>
-<% } %>
-<form method="post" action="/student/profile">
-<input type="hidden" name="_csrf" value="<%= csrfToken %>">
-<label>Họ tên<input name="full_name" value="<%= values.fullName %>" maxlength="150" required>
-</label>
-<label>Email<input value="<%= values.email %>" readonly>
-</label>
-<h2>Đổi mật khẩu (tùy chọn)</h2>
-<label>Mật khẩu hiện tại<input type="password" name="current_password" autocomplete="current-password">
-</label>
-<label>Mật khẩu mới<input type="password" name="new_password" minlength="8" autocomplete="new-password">
-</label>
-<label>Xác nhận mật khẩu mới<input type="password" name="confirm_password" minlength="8" autocomplete="new-password">
-</label>
-<button class="button">Lưu hồ sơ</button>
-</form>
+<section class="card narrow profile-card">
+  <% if (error) { %>
+    <div class="alert error" role="alert"><%= error %></div>
+  <% } %>
+  <% if (message) { %>
+    <div class="alert success" role="status"><%= message %></div>
+  <% } %>
+  <form method="post" action="/student/profile">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>
+      Họ tên
+      <input name="full_name" value="<%= values.fullName %>" maxlength="150" autocomplete="name" required>
+    </label>
+    <label>
+      Email
+      <input value="<%= values.email %>" readonly autocomplete="email">
+    </label>
+    <fieldset>
+      <legend>Đổi mật khẩu <span class="muted">(tùy chọn)</span></legend>
+      <p class="muted">Khi đổi mật khẩu, cần nhập đủ mật khẩu hiện tại và xác nhận mật khẩu mới.</p>
+      <label>
+        Mật khẩu hiện tại
+        <input type="password" name="current_password" autocomplete="current-password">
+      </label>
+      <label>
+        Mật khẩu mới
+        <input type="password" name="new_password" minlength="8" autocomplete="new-password">
+      </label>
+      <label>
+        Xác nhận mật khẩu mới
+        <input type="password" name="confirm_password" minlength="8" autocomplete="new-password">
+      </label>
+    </fieldset>
+    <button class="button" type="submit">Lưu hồ sơ</button>
+  </form>
 </section>
 <%- include("../footer") %>

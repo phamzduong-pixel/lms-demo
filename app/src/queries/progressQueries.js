@@ -28,4 +28,8 @@ async function uncompleteForStudent(pool, userId, courseId, lessonId) {
   return true;
 }
 
-module.exports = { completeForStudent, uncompleteForStudent };
+module.exports = {
+  canManageLessonProgress,
+  completeForStudent,
+  uncompleteForStudent
+};

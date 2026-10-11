@@ -52,10 +52,20 @@ async function listForAdmin(pool, courseId) {
   return rows;
 }
 
-async function setVisibility(pool, reviewId, visible) {
+async function findForAdmin(pool, reviewId, courseId) {
+  const [rows] = await pool.execute(
+    "SELECT id, course_id, is_visible FROM course_reviews " +
+      "WHERE id = ? AND course_id = ?",
+    [reviewId, courseId]
+  );
+  return rows[0] || null;
+}
+
+async function setVisibility(pool, reviewId, courseId, visible) {
   return pool.execute(
-    "UPDATE course_reviews SET is_visible = ? WHERE id = ?",
-    [visible ? 1 : 0, reviewId]
+    "UPDATE course_reviews SET is_visible = ? " +
+      "WHERE id = ? AND course_id = ?",
+    [visible ? 1 : 0, reviewId, courseId]
   );
 }
 
@@ -66,5 +76,6 @@ module.exports = {
   upsert,
   remove,
   listForAdmin,
+  findForAdmin,
   setVisibility
 };

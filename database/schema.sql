@@ -9,8 +9,11 @@ CREATE TABLE users (
   full_name VARCHAR(150) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'student') NOT NULL DEFAULT 'student',
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  role ENUM('admin', 'student', 'teacher') NOT NULL DEFAULT 'student',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  session_version INT UNSIGNED NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_users_role_active (role, is_active)
 );
 
 CREATE TABLE courses (
@@ -23,9 +26,12 @@ CREATE TABLE courses (
   short_description VARCHAR(500) NULL,
   learning_objectives TEXT NULL,
   status ENUM('draft', 'published') NOT NULL DEFAULT 'draft',
+  teacher_id BIGINT UNSIGNED NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_courses_catalog (status, category, level, updated_at)
+  INDEX idx_courses_catalog (status, category, level, updated_at),
+  INDEX idx_courses_teacher_status (teacher_id, status),
+  CONSTRAINT fk_courses_teacher FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE lessons (

@@ -6,10 +6,33 @@
     <h1>Quản lý khóa học</h1>
     <p>Tạo khóa học, quản lý bài học, học viên đăng ký và trạng thái xuất bản.</p>
   </div>
-  <a class="button" href="/admin/courses/new">Tạo khóa học</a>
+  <div class="form-actions">
+    <a class="button secondary" href="/admin/teachers">Quản lý giáo viên</a>
+    <a class="button" href="/admin/courses/new">Tạo khóa học</a>
+  </div>
 </section>
-<% if (error) { %><div class="alert error"><%= error %></div><% } %>
-<% if (message) { %><div class="alert success"><%= message %></div><% } %>
+<% if (error) { %><div class="alert error" role="alert"><%= error %></div><% } %>
+<% if (message) { %><div class="alert success" role="status"><%= message %></div><% } %>
+
+<% const statsData = stats || {}; %>
+<section class="admin-stats" aria-label="Thống kê quản trị">
+  <% const statCards = [
+    ["Tổng khóa học", statsData.total_courses, "Tổng số khóa học"],
+    ["Đã xuất bản", statsData.published_courses, "Có thể xem trên catalog"],
+    ["Bản nháp", statsData.draft_courses, "Chưa mở cho học viên"],
+    ["Học viên", statsData.student_count, "Tài khoản học viên"],
+    ["Lượt đăng ký", statsData.enrollment_count, "Tổng enrollment"],
+    ["Đã hoàn thành", statsData.completed_enrollments, "Enrollment hoàn tất toàn bộ bài"]
+  ]; %>
+  <% statCards.forEach(([label, value, hint]) => { %>
+    <article class="card admin-stat">
+      <span class="admin-stat-label"><%= label %></span>
+      <strong class="admin-stat-value"><%= Number(value || 0) %></strong>
+      <span class="admin-stat-hint"><%= hint %></span>
+    </article>
+  <% }) %>
+</section>
+
 <% if (!courses.length) { %>
   <section class="card empty-state"><p>Chưa có khóa học nào.</p></section>
 <% } else { %>
@@ -23,13 +46,36 @@
           </div>
           <p><%= course.description || "Chưa có mô tả." %></p>
           <p class="muted"><%= course.lesson_count %> bài học · <%= course.enrollment_count %> học viên đăng ký</p>
+          <div class="course-assignment">
+            <span class="muted">Giáo viên phụ trách</span>
+            <strong><%= course.teacher_name || "Admin quản lý" %></strong>
+            <form method="post" action="/admin/courses/<%= course.id %>/teacher" class="assignment-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <label class="sr-only" for="teacher-<%= course.id %>">Giáo viên cho <%= course.title %></label>
+              <select id="teacher-<%= course.id %>" name="teacher_id">
+                <option value="">Admin quản lý</option>
+                <% (teachers || []).forEach((teacher) => { %>
+                  <option value="<%= teacher.id %>" <%= Number(course.teacher_id) === Number(teacher.id) ? "selected" : "" %>><%= teacher.full_name %></option>
+                <% }) %>
+              </select>
+              <button class="button ghost small" type="submit">Lưu phân công</button>
+            </form>
+          </div>
         </div>
         <div class="actions admin-actions">
           <a class="button secondary" href="/admin/courses/<%= course.id %>/lessons">Bài học</a>
           <a class="button secondary" href="/admin/courses/<%= course.id %>/students">Học viên (<%= course.enrollment_count %>)</a>
-          <a class="button secondary" href="/admin/courses/<%= course.id %>/quiz">Quiz</a><a class="button secondary" href="/admin/courses/<%= course.id %>/reviews">Đánh giá</a><a class="button secondary" href="/admin/courses/<%= course.id %>/edit">Sửa</a>
-          <form method="post" action="/admin/courses/<%= course.id %>/toggle-status" class="inline"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button secondary" type="submit"><%= course.status === "published" ? "Chuyển thành nháp" : "Xuất bản" %></button></form>
-          <form method="post" action="/admin/courses/<%= course.id %>/delete" class="inline" onsubmit="return confirm('Xóa khóa học và các bài học?');"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="button danger" type="submit">Xóa</button></form>
+          <a class="button secondary" href="/admin/courses/<%= course.id %>/quiz">Quiz</a>
+          <a class="button secondary" href="/admin/courses/<%= course.id %>/reviews">Đánh giá</a>
+          <a class="button secondary" href="/admin/courses/<%= course.id %>/edit">Sửa</a>
+          <form method="post" action="/admin/courses/<%= course.id %>/toggle-status" class="inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="button secondary" type="submit"><%= course.status === "published" ? "Chuyển thành nháp" : "Xuất bản" %></button>
+          </form>
+          <form method="post" action="/admin/courses/<%= course.id %>/delete" class="inline" onsubmit="return confirm('Xóa khóa học và các bài học?');">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="button danger" type="submit">Xóa</button>
+          </form>
         </div>
       </article>
     <% }) %>

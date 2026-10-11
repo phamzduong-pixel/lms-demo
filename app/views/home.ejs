@@ -1,12 +1,84 @@
-<% const pageStyles = []; %>
+<% const pageStyles = ["home.css"]; %>
 <%- include("header", { pageStyles }) %>
-<section class="hero">
-  <p class="eyebrow">Nền tảng học tập</p>
-  <h1>Học tập rõ ràng, tiến bộ từng bước.</h1>
-  <p>Khám phá các khóa học đã xuất bản và theo dõi tiến độ học tập của bạn.</p>
-  <div class="actions centered">
-    <a class="button" href="/courses">Xem khóa học</a>
-    <% if (!currentUser) { %><a class="button secondary" href="/register">Đăng ký học viên</a><% } %>
+<section class="home-hero" aria-labelledby="home-title">
+  <div class="home-hero-copy">
+    <p class="eyebrow">NỀN TẢNG HỌC TẬP TRỰC TUYẾN</p>
+    <h1 id="home-title">Học đúng trọng tâm, tiến bộ từng bước.</h1>
+    <p class="home-hero-lead">LMS Demo giúp học viên tìm khóa học, học theo bài, làm quiz và theo dõi kết quả trong một không gian rõ ràng.</p>
+    <div class="actions">
+      <% if (!currentUser) { %>
+        <a class="button" href="/courses">Khám phá khóa học</a>
+        <a class="button secondary" href="/register">Đăng ký học viên</a>
+      <% } else if (currentUser.role === "student") { %>
+        <a class="button" href="/student">Mở khu vực học</a>
+        <a class="button secondary" href="/courses">Khám phá khóa học</a>
+      <% } else if (currentUser.role === "teacher") { %>
+        <a class="button" href="/teacher">Khu vực giáo viên</a>
+        <a class="button secondary" href="/courses">Xem catalog</a>
+      <% } else { %>
+        <a class="button" href="/admin">Khu vực quản trị</a>
+        <a class="button secondary" href="/courses">Xem catalog</a>
+      <% } %>
+    </div>
   </div>
+  <div class="home-hero-card" aria-label="Tóm tắt quy trình học">
+    <span class="home-hero-icon" aria-hidden="true">✦</span>
+    <h2>Một lộ trình đơn giản</h2>
+    <p>Từ khóa học đã xuất bản đến bài học và kết quả quiz, mọi bước đều có thể theo dõi.</p>
+    <ol class="home-steps">
+      <li><span>1</span>Tìm khóa học phù hợp</li>
+      <li><span>2</span>Đăng ký và học theo bài</li>
+      <li><span>3</span>Làm quiz, xem tiến độ</li>
+    </ol>
+  </div>
+</section>
+
+<section class="home-section" aria-labelledby="featured-title">
+  <div class="home-section-heading">
+    <div>
+      <p class="eyebrow">CATALOG</p>
+      <h2 id="featured-title">Khóa học mới nhất</h2>
+      <p>Chỉ hiển thị những khóa học đã được xuất bản.</p>
+    </div>
+    <a class="text-link" href="/courses">Xem tất cả khóa học →</a>
+  </div>
+  <% if (featuredCourses && featuredCourses.length) { %>
+    <div class="home-course-grid">
+      <% featuredCourses.forEach((course) => { %>
+        <article class="card home-course-card">
+          <span class="badge published"><%= course.category %> · <%= course.level %></span>
+          <h3><a href="/courses/<%= course.id %>"><%= course.title %></a></h3>
+          <p><%= course.short_description || course.description || "Khóa học chưa có mô tả." %></p>
+          <div class="home-course-footer"><span class="muted"><%= course.enrollment_count %> học viên</span><a class="text-link" href="/courses/<%= course.id %>">Chi tiết</a></div>
+        </article>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="card empty-state home-empty-state"><h3>Chưa có khóa học đã xuất bản</h3><p>Catalog sẽ hiển thị khóa học tại đây sau khi quản trị viên hoặc giáo viên xuất bản nội dung.</p><a class="button secondary" href="/courses">Mở catalog</a></div>
+  <% } %>
+</section>
+
+<section class="home-section" aria-labelledby="benefits-title">
+  <div class="home-section-heading"><div><p class="eyebrow">TÍNH NĂNG</p><h2 id="benefits-title">Tập trung vào việc học</h2></div></div>
+  <div class="home-benefit-grid">
+    <article class="card home-benefit"><span class="benefit-number">01</span><h3>Học theo bài</h3><p>Mở từng bài học, đánh dấu hoàn thành và xem tiến độ khóa học.</p></article>
+    <article class="card home-benefit"><span class="benefit-number">02</span><h3>Quiz và kết quả</h3><p>Làm bài kiểm tra, xem điểm và theo dõi lịch sử các lần nộp.</p></article>
+    <article class="card home-benefit"><span class="benefit-number">03</span><h3>Ghi chú và lưu bài</h3><p>Lưu lại bài học cần xem lại và ghi chú ngay trong quá trình học.</p></article>
+  </div>
+</section>
+
+<section class="home-section home-audience" aria-labelledby="audience-title">
+  <div><p class="eyebrow">AI SỬ DỤNG LMS?</p><h2 id="audience-title">Mỗi vai trò một không gian phù hợp</h2></div>
+  <div class="home-audience-grid">
+    <article><h3>Học viên</h3><p>Tìm khóa học đã xuất bản, đăng ký, học bài và xem kết quả của chính mình.</p></article>
+    <article><h3>Giáo viên</h3><p>Quản lý nội dung, bài học, quiz và học viên trong các khóa được phân công.</p></article>
+  </div>
+</section>
+
+<section class="home-section home-faq" aria-labelledby="faq-title">
+  <p class="eyebrow">GIẢI ĐÁP NHANH</p><h2 id="faq-title">Câu hỏi thường gặp</h2>
+  <details><summary>Tôi có thể xem khóa học khi chưa đăng nhập không?</summary><p>Có. Khách có thể xem catalog và chi tiết các khóa đã xuất bản; cần đăng nhập để đăng ký học.</p></details>
+  <details><summary>Tiến độ được tính như thế nào?</summary><p>Tiến độ dựa trên số bài học đã hoàn thành trong khóa học mà bạn đã đăng ký.</p></details>
+  <details><summary>Giáo viên có xem được mọi khóa học không?</summary><p>Không. Giáo viên chỉ quản lý nội dung và kết quả trong khóa học đang được phân công.</p></details>
 </section>
 <%- include("footer") %>

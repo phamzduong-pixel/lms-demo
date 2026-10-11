@@ -18,19 +18,21 @@ function lessonFormData(
   mode,
   course,
   values = { title: "", content: "", position: "" },
-  error = ""
+  error = "",
+  basePath = "/admin"
 ) {
   const editing = mode === "edit";
   return {
     title: editing ? "Sửa bài học" : "Thêm bài học",
     heading: editing ? "Sửa bài học" : "Thêm bài học",
     formAction: editing
-      ? "/admin/courses/" + course.id + "/lessons/" + values.id
-      : "/admin/courses/" + course.id + "/lessons",
+      ? basePath + "/courses/" + course.id + "/lessons/" + values.id
+      : basePath + "/courses/" + course.id + "/lessons",
     course,
     lesson: editing ? values : null,
     values,
-    error
+    error,
+    managementBasePath: basePath
   };
 }
 

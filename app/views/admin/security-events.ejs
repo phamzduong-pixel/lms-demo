@@ -1,0 +1,183 @@
+<% const pageStyles = ["admin.css"]; %>
+<%- include("../header", { pageStyles }) %>
+
+<section class="page-heading admin-heading">
+  <div>
+    <p class="eyebrow">QUẢN TRỊ</p>
+    <h1>Nhật ký bảo mật</h1>
+    <p class="page-lead">Theo dõi đăng nhập, truy cập bị từ chối và thao tác quản trị.</p>
+  </div>
+</section>
+
+<section class="card security-events-panel" aria-labelledby="security-filter-title">
+  <div class="security-panel-header">
+    <div>
+      <h2 id="security-filter-title">Bộ lọc nhật ký</h2>
+      <p class="muted">Dữ liệu không hiển thị mật khẩu, token, cookie, email hoặc IP thô.</p>
+    </div>
+    <div class="security-results-summary" aria-live="polite">
+      <strong><%= total %></strong>
+      <span>nhóm sau lọc</span>
+      <small>Đang hiển thị <%= displayedCount %> dòng / trang</small>
+    </div>
+  </div>
+
+  <p class="security-timezone">Thời gian hiển thị theo Asia/Ho_Chi_Minh (UTC+7).</p>
+
+  <% if (filterError) { %>
+    <div class="alert error" role="alert"><%= filterError %></div>
+  <% } %>
+
+  <form class="security-filters" method="get" action="/admin/security-events">
+    <label>
+      Từ ngày
+      <input type="date" name="from" value="<%= filters.from %>">
+    </label>
+    <label>
+      Đến ngày
+      <input type="date" name="to" value="<%= filters.to %>">
+    </label>
+    <label>
+      Loại sự kiện
+      <select name="eventType">
+        <option value="">Tất cả loại sự kiện</option>
+        <% eventTypeOptions.forEach((option) => { %>
+          <option value="<%= option.value %>" <%= filters.eventType === option.value ? "selected" : "" %>><%= option.label %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>
+      Mức độ
+      <select name="severity">
+        <option value="">Tất cả mức độ</option>
+        <% severityOptions.forEach((option) => { %>
+          <option value="<%= option.value %>" <%= filters.severity === option.value ? "selected" : "" %>><%= option.label %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>
+      Phạm vi hiển thị
+      <select name="scope">
+        <option value="important" <%= filters.scope === "important" ? "selected" : "" %>>Sự kiện quan trọng</option>
+        <option value="all" <%= filters.scope === "all" ? "selected" : "" %>>Tất cả sự kiện</option>
+      </select>
+    </label>
+    <div class="form-actions security-filter-actions">
+      <button class="button primary" type="submit">Lọc nhật ký</button>
+      <a class="button ghost" href="/admin/security-events">Xóa lọc</a>
+    </div>
+  </form>
+</section>
+
+<p class="security-log-note">Sự kiện cảnh báo có thể phát sinh từ thao tác nhầm hoặc kiểm thử; cần xem chi tiết trước khi kết luận.</p>
+
+<section class="card table-card security-events-table-card" aria-labelledby="security-table-title">
+  <div class="security-table-header">
+    <div>
+      <h2 id="security-table-title">Sự kiện bảo mật</h2>
+      <p class="muted">Trang <%= page %>/<%= pageCount %> · 20 nhóm/trang</p>
+    </div>
+    <span class="muted"><%= displayedCount %> dòng đang hiển thị · <%= total %> nhóm sau lọc</span>
+  </div>
+
+  <% if (!events.length) { %>
+    <div class="empty-state security-empty-state">
+      <h3><%= hasExplicitFilters ? "Không có kết quả phù hợp" : "Chưa có sự kiện quan trọng" %></h3>
+      <p><%= hasExplicitFilters ? "Hãy thử thay đổi khoảng ngày, loại sự kiện, mức độ hoặc phạm vi." : "Nhật ký sẽ hiển thị khi hệ thống ghi nhận sự kiện quan trọng." %></p>
+    </div>
+  <% } else { %>
+    <div class="table-scroll">
+      <table class="data-table security-event-table">
+        <thead>
+          <tr>
+            <th scope="col">Thời gian</th>
+            <th scope="col">Sự kiện</th>
+            <th scope="col">Mức độ</th>
+            <th scope="col">Mô tả</th>
+            <th scope="col">Chi tiết</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% events.forEach((event) => { %>
+            <tr>
+              <td data-label="Thời gian">
+                <span class="security-time">Cuối: <%= event.last_seen_label %></span>
+                <small class="security-time security-time-secondary">Đầu: <%= event.first_seen_label %></small>
+              </td>
+              <td data-label="Sự kiện">
+                <span class="security-event-name"><%= event.event_type_label %></span>
+                <% if (event.isGrouped) { %>
+                  <span class="security-occurrence">Xảy ra <%= event.occurrence_count %> lần</span>
+                <% } %>
+              </td>
+              <td data-label="Mức độ">
+                <span class="severity-badge severity-<%= event.severity %>"><%= event.severity_label %></span>
+              </td>
+              <td data-label="Mô tả">
+                <p class="security-description"><%= event.description %></p>
+              </td>
+              <td data-label="Chi tiết">
+                <details class="security-detail">
+                  <summary>Xem chi tiết</summary>
+                  <dl class="security-detail-list">
+                    <div>
+                      <dt>Mã sự kiện</dt>
+                      <dd><code><%= event.event_type %></code></dd>
+                    </div>
+                    <div>
+                      <dt>Mức độ kỹ thuật</dt>
+                      <dd><code><%= event.severity %></code></dd>
+                    </div>
+                    <div>
+                      <dt>Số lần</dt>
+                      <dd><%= event.occurrence_count %></dd>
+                    </div>
+                    <div>
+                      <dt>Lần đầu</dt>
+                      <dd><%= event.first_seen_label %></dd>
+                    </div>
+                    <div>
+                      <dt>Lần cuối</dt>
+                      <dd><%= event.last_seen_label %></dd>
+                    </div>
+                    <div>
+                      <dt>Request ID</dt>
+                      <dd><code><%= event.request_id || "—" %></code></dd>
+                    </div>
+                    <div>
+                      <dt>HTTP</dt>
+                      <dd><%= event.status_code || "—" %> · <%= event.status_label %></dd>
+                    </div>
+                    <div>
+                      <dt>Phương thức</dt>
+                      <dd><code><%= event.method || "—" %></code></dd>
+                    </div>
+                    <div>
+                      <dt>Route</dt>
+                      <dd><code><%= event.route || "—" %></code></dd>
+                    </div>
+                  </dl>
+                  <pre class="security-details"><%= event.details_label %></pre>
+                </details>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (pageCount > 1) { %>
+      <nav class="pagination" aria-label="Phân trang nhật ký bảo mật">
+        <% if (previousUrl) { %>
+          <a class="button ghost small" href="<%= previousUrl %>">← Trước</a>
+        <% } %>
+        <span>Trang <%= page %> / <%= pageCount %></span>
+        <% if (nextUrl) { %>
+          <a class="button ghost small" href="<%= nextUrl %>">Sau →</a>
+        <% } %>
+      </nav>
+    <% } %>
+  <% } %>
+</section>
+
+<%- include("../footer") %>

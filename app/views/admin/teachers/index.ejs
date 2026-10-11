@@ -1,0 +1,25 @@
+<% const pageStyles = ["admin.css"]; %>
+<%- include("../../header", { pageStyles }) %>
+<section class="page-heading split-heading">
+  <div><p class="eyebrow">QUẢN TRỊ</p><h1>Quản lý giáo viên</h1><p>Quản lý tài khoản, trạng thái và phạm vi khóa học được phân công.</p></div>
+  <a class="button" href="/admin/teachers/new">Tạo giáo viên</a>
+</section>
+<% if (message) { %><div class="alert success" role="status"><%= message %></div><% } %>
+<% if (error) { %><div class="alert error" role="alert"><%= error %></div><% } %>
+<section class="card teacher-filter-card">
+  <form class="teacher-filters" method="get" action="/admin/teachers">
+    <label>Tìm theo tên hoặc email<input type="search" name="q" value="<%= filters.search %>" maxlength="120" placeholder="Nhập từ khóa"></label>
+    <label>Trạng thái<select name="status"><option value="">Tất cả</option><option value="active" <%= filters.status === "active" ? "selected" : "" %>>Đang hoạt động</option><option value="locked" <%= filters.status === "locked" ? "selected" : "" %>>Đã khóa</option></select></label>
+    <div class="form-actions"><button class="button" type="submit">Lọc</button><a class="button ghost" href="/admin/teachers">Xóa lọc</a></div>
+  </form>
+</section>
+<section class="card table-card">
+  <div class="table-heading"><div><h2>Danh sách giáo viên</h2><p class="muted"><%= total %> tài khoản sau lọc · trang <%= page %>/<%= pageCount %></p></div></div>
+  <% if (!teachers.length) { %><div class="empty-state"><h2>Không có giáo viên phù hợp</h2><p>Hãy thử thay đổi từ khóa hoặc bộ lọc trạng thái.</p></div><% } else { %>
+    <div class="table-wrap"><table class="data-table teacher-table"><thead><tr><th>Giáo viên</th><th>Email</th><th>Trạng thái</th><th>Khóa phụ trách</th><th>Ngày tạo</th><th></th></tr></thead><tbody>
+      <% teachers.forEach((teacher) => { %><tr><td data-label="Giáo viên"><strong><%= teacher.full_name %></strong></td><td data-label="Email"><%= teacher.email %></td><td data-label="Trạng thái"><span class="status-badge <%= teacher.is_active ? "status-active" : "status-locked" %>"><%= teacher.status_label %></span></td><td data-label="Khóa phụ trách"><%= teacher.assigned_course_count %></td><td data-label="Ngày tạo"><%= teacher.created_at_label %></td><td class="table-action" data-label="Thao tác"><a class="button secondary small" href="/admin/teachers/<%= teacher.id %>">Xem chi tiết</a></td></tr><% }) %>
+    </tbody></table></div>
+    <% if (pageCount > 1) { %><nav class="pagination" aria-label="Phân trang giáo viên"><% if (previousUrl) { %><a class="button ghost small" href="<%= previousUrl %>">← Trước</a><% } %><span>Trang <%= page %> / <%= pageCount %></span><% if (nextUrl) { %><a class="button ghost small" href="<%= nextUrl %>">Sau →</a><% } %></nav><% } %>
+  <% } %>
+</section>
+<%- include("../../footer") %>

@@ -21,7 +21,7 @@
               <td data-label="Học viên"><strong><%= student.full_name %></strong></td>
               <td data-label="Email"><%= student.email %></td>
               <td data-label="Khóa đã đăng ký"><%= student.enrolled_course_count %></td>
-              <td class="table-action"><a class="button secondary" href="/admin/students/<%= student.id %>">Xem chi tiết</a></td>
+              <td class="table-action" data-label="Thao tác"><a class="button secondary" href="/admin/students/<%= student.id %>">Xem chi tiết</a></td>
             </tr>
           <% }) %>
         </tbody>

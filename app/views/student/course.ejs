@@ -12,7 +12,7 @@
   <progress value="<%= completedLessons %>" max="<%= lessons.length || 1 %>"></progress>
   <p class="muted"><%= completedLessons %>/<%= lessons.length %> bài học hoàn thành</p>
 </section>
-<div class="actions"><a class="button secondary" href="/student/courses/<%= course.id %>/quiz">Bài kiểm tra</a><a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Lịch sử kiểm tra</a></div>
+<div class="actions course-toolbar"><a class="button" href="/student/courses/<%= course.id %>/quiz">Làm bài kiểm tra</a><a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Xem lịch sử bài kiểm tra</a></div>
 <section class="student-course-shell">
   <aside class="card lesson-picker">
     <div class="section-heading"><h2>Bài học</h2><span class="muted"><%= lessons.length %></span></div>
@@ -24,7 +24,7 @@
           const selected = currentLesson && Number(currentLesson.id) === Number(lesson.id);
           const completed = Number(lesson.completed) === 1;
         %>
-          <a class="lesson-picker-item <%= selected ? 'selected' : '' %>" href="/student/courses/<%= course.id %>/lessons/<%= lesson.id %>" <% if (selected) { %>aria-current="page"<% } %>>
+          <a class="lesson-picker-item <%= selected ? 'selected' : '' %> <%= completed ? 'completed' : 'incomplete' %>" href="/student/courses/<%= course.id %>/lessons/<%= lesson.id %>" <% if (selected) { %>aria-current="page"<% } %>>
             <span class="lesson-number"><%= lesson.position %></span>
             <span class="lesson-picker-text"><%= lesson.title %><small><%= completed ? "Đã hoàn thành" : "Chưa hoàn thành" %></small></span>
           </a>

@@ -1,7 +1,8 @@
 <% const pageStyles = ["admin.css"]; %>
+<% const basePath = typeof managementBasePath !== "undefined" && managementBasePath ? managementBasePath : "/admin"; %>
 <%- include("../../header", { pageStyles }) %>
 <section class="page-heading">
-  <a class="back-link" href="/admin">← Quản lý khóa học</a>
+  <a class="back-link" href="<%= basePath %>">← Quản lý khóa học</a>
   <p class="eyebrow">Học viên theo khóa học</p>
   <h1><%= course.title %></h1>
   <p class="lead">Danh sách chỉ đọc về học viên đã đăng ký và tiến độ của họ.</p>
@@ -21,7 +22,7 @@
         <td data-label="Email"><%= student.email %></td>
         <td data-label="Ngày đăng ký"><%= student.enrolled_at || "—" %></td>
         <td data-label="Tiến độ"><% if (total) { %><div class="table-progress"><strong><%= completed %>/<%= total %> · <%= progress %>%</strong><progress value="<%= completed %>" max="<%= total %>"></progress></div><% } else { %><span class="muted">Chưa có bài học</span><% } %></td>
-        <td class="table-action"><a class="button secondary" href="/admin/students/<%= student.id %>">Xem học viên</a></td>
+        <td class="table-action" data-label="Thao tác"><% if (basePath === "/admin") { %><a class="button secondary" href="<%= basePath %>/students/<%= student.id %>">Xem học viên</a><% } else { %><span class="muted">Trong khóa học này</span><% } %></td>
       </tr><% }) %></tbody>
     </table></div>
   </section>

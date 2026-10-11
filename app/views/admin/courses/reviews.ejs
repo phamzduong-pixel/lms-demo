@@ -1,33 +1,33 @@
-<% const pageStyles=["admin.css"]; %>
-<%- include("../../header",{pageStyles}) %>
+<% const pageStyles = ["admin.css"]; %>
+<% const basePath = typeof managementBasePath !== "undefined" && managementBasePath ? managementBasePath : "/admin"; %>
+<%- include("../../header", { pageStyles }) %>
 <section class="page-heading">
-<a class="back-link" href="/admin">← Quản lý khóa học</a>
-<h1>Đánh giá: <%= course.title %>
-</h1>
+  <a class="back-link" href="<%= basePath %>">← Quản lý khóa học</a>
+  <p class="eyebrow">Đánh giá học viên</p>
+  <h1><%= course.title %></h1>
 </section>
 <section class="admin-list">
-<% if(!reviews.length){ %>
-<div class="card empty-state">Chưa có đánh giá.</div>
-<% } %>
-<% reviews.forEach((review)=>{ %>
-<article class="card">
-<h2>
-<%= review.full_name %> · <%= review.rating %>/5</h2>
-<p>
-<%= review.comment %>
-</p>
-<p class="muted">
-<%= review.email %> · <%= Number(review.is_visible)===1?'Đang công khai':'Đang ẩn' %>
-</p>
-<form method="post" action="/admin/reviews/<%= review.id %>/visibility">
-<input type="hidden" name="_csrf" value="<%= csrfToken %>">
-<input type="hidden" name="course_id" value="<%= course.id %>">
-<input type="hidden" name="visible" value="<%= Number(review.is_visible)===1?0:1 %>">
-<button class="button secondary">
-<%= Number(review.is_visible)===1?'Ẩn đánh giá':'Công khai đánh giá' %>
-</button>
-</form>
-</article>
-<% }) %>
+  <% if (!reviews.length) { %>
+    <div class="card empty-state">Chưa có đánh giá.</div>
+  <% } %>
+  <% reviews.forEach((review) => { %>
+    <article class="card review-admin-card">
+      <div class="section-heading">
+        <h2><%= review.full_name %> · <%= review.rating %>/5</h2>
+        <span class="badge <%= Number(review.is_visible) === 1 ? 'published' : 'draft' %>">
+          <%= Number(review.is_visible) === 1 ? "Đang công khai" : "Đang ẩn" %>
+        </span>
+      </div>
+      <p><%= review.comment %></p>
+      <p class="muted"><%= review.email %></p>
+<% if (!(typeof readOnly !== "undefined" && readOnly)) { %>      <form method="post" action="<%= basePath %>/courses/<%= course.id %>/reviews/<%= review.id %>/visibility" class="inline">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="visible" value="<%= Number(review.is_visible) === 1 ? 0 : 1 %>">
+        <button class="button secondary" type="submit">
+          <%= Number(review.is_visible) === 1 ? "Ẩn đánh giá" : "Công khai đánh giá" %>
+        </button>
+      </form><% } else { %>      <p class="muted">Đánh giá chỉ được xem trong khu vực giáo viên.</p><% } %>
+    </article>
+  <% }) %>
 </section>
 <%- include("../../footer") %>

@@ -4,7 +4,7 @@ const { requireRole } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const courses = require("../queries/courseQueries");
 const quiz = require("../queries/quizQueries");
-const { parseId, renderError } = require("./routeHelpers");
+const { parseId, renderError, formatDateTime } = require("./routeHelpers");
 
 const router = express.Router();
 const requireAdmin = requireRole("admin");
@@ -65,7 +65,7 @@ function normalizeQuestionForForm(question = {}) {
   return { ...question, options, correctOption };
 }
 
-function formData(course, question = {}, error = "") {
+function formData(course, question = {}, error = "", basePath = "/admin") {
   const values = normalizeQuestionForForm({
     position: "",
     options: ["", "", "", ""],
@@ -78,8 +78,9 @@ function formData(course, question = {}, error = "") {
     question: values,
     error,
     formAction: values.id
-      ? "/admin/courses/" + course.id + "/quiz/questions/" + values.id
-      : "/admin/courses/" + course.id + "/quiz/questions"
+      ? basePath + "/courses/" + course.id + "/quiz/questions/" + values.id
+      : basePath + "/courses/" + course.id + "/quiz/questions",
+    managementBasePath: basePath
   };
 }
 function isHistoryLocked(error) {
@@ -260,6 +261,39 @@ router.post(
   }
 );
 
+
+router.get(
+  "/admin/courses/:courseId/quiz/results/attempts/:attemptId",
+  requireAdmin,
+  async (req, res) => {
+    const courseId = parseId(req.params.courseId);
+    const attemptId = parseId(req.params.attemptId);
+    const course = await findCourse(courseId);
+    const attempt = course && attemptId
+      ? await quiz.findAttemptForAdmin(pool, courseId, attemptId)
+      : null;
+
+    if (!course || !attempt) {
+      return renderError(
+        res,
+        404,
+        "Không tìm thấy lượt làm",
+        "Lượt làm không tồn tại trong khóa học này."
+      );
+    }
+
+    return res.render("admin/quizzes/attempt", {
+      title: "Chi tiết lượt làm",
+      course,
+      attempt: {
+        ...attempt,
+        submitted_at_label: formatDateTime(attempt.submitted_at)
+      },
+      answers: await quiz.attemptAnswersForAdmin(pool, courseId, attemptId)
+    });
+  }
+);
+
 router.get(
   "/admin/courses/:courseId/quiz/results",
   requireAdmin,
@@ -272,7 +306,10 @@ router.get(
     res.render("admin/quizzes/results", {
       title: "Kết quả: " + course.title,
       course,
-      attempts: await quiz.listResultsForAdmin(pool, courseId)
+      attempts: (await quiz.listResultsForAdmin(pool, courseId)).map((attempt) => ({
+        ...attempt,
+        submitted_at_label: formatDateTime(attempt.submitted_at)
+      }))
     });
   }
 );
@@ -280,3 +317,5 @@ router.get(
 module.exports = router;
 module.exports.formData = formData;
 module.exports.normalizeQuestionForForm = normalizeQuestionForForm;
+module.exports.readValues = readValues;
+module.exports.validate = validate;

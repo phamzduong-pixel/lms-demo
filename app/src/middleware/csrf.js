@@ -1,3 +1,4 @@
+const securityService = require("../services/securityService");
 const crypto = require("crypto");
 
 function ensureCsrfToken(req, res, next) {
@@ -20,10 +21,18 @@ function verifyCsrfToken(req, res, next) {
       Buffer.from(submitted),
       Buffer.from(expected)
     );
-  if (!valid) return res.status(403).render("error", {
-    title: "Yêu cầu không hợp lệ",
-    message: "Phiên biểu mẫu đã hết hạn. Vui lòng tải lại trang và thử lại."
-  });
+  if (!valid) {
+    void securityService.recordRequestEvent(req, req.app?.locals?.securityPool, {
+      eventType: "csrf_rejected",
+      severity: "warning",
+      statusCode: 403,
+      details: { reason: "invalid_or_missing_token" }
+    });
+    return res.status(403).render("error", {
+      title: "Yêu cầu không hợp lệ",
+      message: "Phiên biểu mẫu đã hết hạn. Vui lòng tải lại trang và thử lại."
+    });
+  }
   next();
 }
 

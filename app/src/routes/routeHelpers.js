@@ -11,4 +11,14 @@ function validateCourse(values) {
   return null;
 }
 function validateLesson(values) { const position = Number(values.position); if (!values.title) return "Tiêu đề bài học phải có từ 1 đến 255 ký tự."; if (!Number.isInteger(position) || position < 1 || position > 4294967295) return "Vị trí bài học phải là số nguyên dương."; if (values.content.length > 1000000) return "Nội dung bài học quá dài."; return null; }
-module.exports = { parseId, renderError, courseValues, lessonValues, validateCourse, validateLesson };
+function formatDateTime(value) {
+  if (!value) return "—";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("vi-VN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Ho_Chi_Minh"
+  }).format(date);
+}
+module.exports = { parseId, renderError, courseValues, lessonValues, validateCourse, validateLesson, formatDateTime };

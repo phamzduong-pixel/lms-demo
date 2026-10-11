@@ -231,6 +231,41 @@ async function listResultsForAdmin(pool, courseId) {
   return rows;
 }
 
+
+async function findAttemptForAdmin(pool, courseId, attemptId) {
+  const [rows] = await pool.execute(
+    "SELECT a.id, a.course_id, a.user_id, a.submitted_at, " +
+      "a.correct_count, a.total_questions, a.score, " +
+      "u.full_name, u.email, c.title AS course_title " +
+      "FROM quiz_attempts a " +
+      "INNER JOIN users u ON u.id = a.user_id " +
+      "INNER JOIN courses c ON c.id = a.course_id " +
+      "WHERE a.id = ? AND a.course_id = ?",
+    [attemptId, courseId]
+  );
+  return rows[0] || null;
+}
+
+async function attemptAnswersForAdmin(pool, courseId, attemptId) {
+  const [rows] = await pool.execute(
+    "SELECT q.id AS question_id, q.position, q.question_text, " +
+      "qo.option_text AS selected_option, aa.is_correct, " +
+      "(SELECT option_text FROM quiz_options correct_option " +
+        "WHERE correct_option.question_id = q.id " +
+          "AND correct_option.is_correct = 1 LIMIT 1) AS correct_option " +
+      "FROM quiz_attempt_answers aa " +
+      "INNER JOIN quiz_attempts a ON a.id = aa.attempt_id " +
+        "AND a.course_id = ? " +
+      "INNER JOIN quiz_questions q ON q.id = aa.question_id " +
+        "AND q.course_id = a.course_id " +
+      "INNER JOIN quiz_options qo ON qo.id = aa.option_id " +
+        "AND qo.question_id = aa.question_id " +
+      "WHERE aa.attempt_id = ? ORDER BY q.position, q.id",
+    [courseId, attemptId]
+  );
+  return rows;
+}
+
 module.exports = {
   listForCourse,
   findQuestion,
@@ -244,6 +279,8 @@ module.exports = {
   findAttemptBySubmissionKey,
   attemptAnswers,
   listResultsForAdmin,
+  findAttemptForAdmin,
+  attemptAnswersForAdmin,
   hasSubmittedAnswers,
   quizHistoryError
 };

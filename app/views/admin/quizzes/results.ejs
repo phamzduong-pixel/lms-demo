@@ -1,45 +1,47 @@
-<% const pageStyles=["admin.css","quiz.css"]; %>
-<%- include("../../header",{pageStyles}) %>
+<% const pageStyles = ["admin.css", "quiz.css"]; %>
+<% const basePath = typeof managementBasePath !== "undefined" && managementBasePath ? managementBasePath : "/admin"; %>
+<%- include("../../header", { pageStyles }) %>
 <section class="page-heading">
-<a class="back-link" href="/admin/courses/<%= course.id %>/quiz">← Câu hỏi</a>
-<h1>Kết quả: <%= course.title %>
-</h1>
+  <a class="back-link" href="<%= basePath %>/courses/<%= course.id %>/quiz">← Câu hỏi</a>
+  <p class="eyebrow">Kết quả quiz</p>
+  <h1><%= course.title %></h1>
 </section>
-<section class="card">
-<% if(!attempts.length){ %>
-<p>Chưa có lượt làm bài.</p>
-<% }else{ %>
-<table>
-<thead>
-<tr>
-<th>Học viên</th>
-<th>Thời gian</th>
-<th>Đúng</th>
-<th>Điểm</th>
-</tr>
-</thead>
-<tbody>
-<% attempts.forEach((a)=>{ %>
-<tr>
-<td>
-<%= a.full_name %>
-<br>
-<small>
-<%= a.email %>
-</small>
-</td>
-<td>
-<%= a.submitted_at %>
-</td>
-<td>
-<%= a.correct_count %>/<%= a.total_questions %>
-</td>
-<td>
-<%= a.score %>%</td>
-</tr>
-<% }) %>
-</tbody>
-</table>
-<% } %>
+<section class="card table-card">
+  <% if (!attempts.length) { %>
+    <div class="empty-state">
+      <h2>Chưa có lượt làm bài</h2>
+      <p class="muted">Kết quả sẽ xuất hiện sau khi học viên nộp quiz.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Học viên</th>
+            <th>Thời gian nộp</th>
+            <th>Số câu đúng</th>
+            <th>Điểm</th>
+            <th><span class="sr-only">Thao tác</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% attempts.forEach((attempt) => { %>
+            <tr>
+              <td data-label="Học viên">
+                <%= attempt.full_name %><br>
+                <small><%= attempt.email %></small>
+              </td>
+              <td data-label="Thời gian nộp"><%= attempt.submitted_at_label || attempt.submitted_at %></td>
+              <td data-label="Số câu đúng"><%= attempt.correct_count %>/<%= attempt.total_questions %></td>
+              <td data-label="Điểm"><%= attempt.score %>%</td>
+              <td data-label="Thao tác" class="table-action">
+                <a class="button ghost small" href="<%= basePath %>/courses/<%= course.id %>/quiz/results/attempts/<%= attempt.id %>">Xem chi tiết</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
 </section>
 <%- include("../../footer") %>

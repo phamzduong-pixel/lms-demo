@@ -78,6 +78,6 @@ test("password update query binds the hash before the user id", async () => {
 
   await userQueries.updatePassword(pool, 7, "new-hash");
 
-  assert.equal(receivedSql, "UPDATE users SET password_hash = ? WHERE id = ?");
+  assert.match(receivedSql, /UPDATE users SET password_hash = \?, session_version = session_version \+ 1 WHERE id = \?/);
   assert.deepEqual(receivedParams, ["new-hash", 7]);
 });

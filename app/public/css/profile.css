@@ -1,1 +1,21 @@
-.narrow{max-width:44rem;margin-inline:auto}
+.narrow { max-width: 44rem; margin-inline: auto; }
+.profile-card { max-width: 48rem; margin-inline: auto; }
+
+.profile-card fieldset {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.profile-card legend {
+  padding-inline: var(--space-2);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.profile-card fieldset p {
+  margin: 0;
+}
