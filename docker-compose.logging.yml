@@ -1,0 +1,43 @@
+services:
+  loki:
+    profiles: ["logging"]
+    image: grafana/loki:3.5.7
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/loki.yml"]
+    expose:
+      - "3100"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./infra/logging/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+
+  promtail:
+    profiles: ["logging"]
+    image: grafana/promtail:3.5.7
+    restart: unless-stopped
+    user: "0:0"
+    command: ["-config.file=/etc/promtail/promtail.yml"]
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./infra/logging/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - promtail_positions:/var/lib/promtail
+    depends_on:
+      loki:
+        condition: service_started
+
+volumes:
+  loki_data:
+  promtail_positions:

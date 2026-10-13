@@ -455,3 +455,80 @@ Demo quyền và dữ liệu test:
 6. Mở một URL ngẫu nhiên để kiểm tra 404 và link quay về theo role.
 
 Không dùng các bước demo trên để xóa khóa học, xóa tài khoản thật hoặc ghi đè lượt làm lịch sử.
+## Loki, Promtail và truy vấn LogQL
+
+Loki lưu trữ log tập trung; Promtail đọc log Docker dạng `json-file` trên Ubuntu rồi gửi đến Loki. Grafana dùng datasource Loki để tìm và lọc log bằng LogQL. Các dịch vụ logging chỉ được bật khi dùng profile `logging`.
+
+### Kiểm tra cấu hình
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  config --quiet
+```
+
+### Khởi động Loki và Promtail
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  up -d loki promtail
+```
+
+### Kiểm tra trạng thái và log
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  ps loki promtail
+
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  logs --tail=50 loki promtail
+```
+
+Grafana đã được cấu hình datasource Loki tại `http://loki:3100` trong mạng Docker. Mở Grafana qua SSH tunnel, vào **Explore**, chọn datasource **Loki**, đặt thời gian **Last 15 minutes** rồi chạy các truy vấn mẫu:
+
+```logql
+{job="docker-json"}
+```
+
+Hiển thị log Docker đã được thu thập.
+
+```logql
+{job="docker-json", stream="stderr"}
+```
+
+Lọc các dòng log ghi ra `stderr`.
+
+```logql
+{job="docker-json"} |= "GET /logql-demo-not-found HTTP/1.1"
+```
+
+Tìm request thử nghiệm tới đường dẫn không tồn tại; log Nginx ghi nhận mã HTTP `404`.
+
+Loki và Promtail không mở cổng trực tiếp ra máy host; Grafana truy cập Loki qua mạng nội bộ Docker.
