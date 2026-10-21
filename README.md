@@ -1,51 +1,46 @@
 # LMS Demo – Hệ thống học trực tuyến đơn giản
 
-LMS Demo là ứng dụng học trực tuyến xây dựng bằng Node.js, Express, EJS và MySQL. Hệ thống chạy bằng Docker Compose, sử dụng Nginx làm reverse proxy, phpMyAdmin để quản lý cơ sở dữ liệu, Prometheus và Grafana để giám sát, cùng Loki và Promtail để tập trung log.
+LMS Demo dùng Node.js, Express, EJS và MySQL. Docker Compose chạy website, MySQL, Nginx và phpMyAdmin; các file Compose bổ sung chạy Prometheus/Grafana/Alertmanager và Loki/Promtail. Môi trường demo chính là Ubuntu Server trong VMware.
 
-> **Môi trường triển khai chính:** Ubuntu Server trên VMware. Các lệnh Ubuntu trong tài liệu chạy tại thư mục `/home/duongpham/projects/lms-demo`, trừ khi ghi rõ khác.
->
-> **Lưu ý:** Website hiện truy cập bằng HTTP và có security headers cơ bản; chưa cấu hình HTTPS/TLS. Không dùng `https://` khi truy cập.
+> Website hiện dùng **HTTP** với các security headers cơ bản; chưa cấu hình HTTPS. Chạy các lệnh Ubuntu từ `/home/duongpham/projects/lms-demo`, trừ khi có chỉ dẫn khác. Không đưa `.env`, file mật khẩu hoặc backup lên GitHub.
 
 ## Mục lục
 
-1. [Thành phần và cổng truy cập](#1-thành-phần-và-cổng-truy-cập)
-2. [Chuẩn bị môi trường](#2-chuẩn-bị-môi-trường)
-3. [Cấu hình biến môi trường](#3-cấu-hình-biến-môi-trường)
-4. [Khởi động LMS lần đầu](#4-khởi-động-lms-lần-đầu)
-5. [Cập nhật code và xử lý lỗi 502](#5-cập-nhật-code-và-xử-lý-lỗi-502)
-6. [Tắt và khởi động lại hệ thống](#6-tắt-và-khởi-động-lại-hệ-thống)
-7. [Kiểm tra và chẩn đoán](#7-kiểm-tra-và-chẩn-đoán)
-8. [Sử dụng phpMyAdmin và kiểm tra MySQL](#8-sử-dụng-phpmyadmin-và-kiểm-tra-mysql)
-9. [Backup và migration database](#9-backup-và-migration-database)
-10. [Chạy test ứng dụng](#10-chạy-test-ứng-dụng)
-11. [Bật Prometheus, Grafana và Alertmanager](#11-bật-prometheus-grafana-và-alertmanager)
-12. [Bật Loki và Promtail, truy vấn LogQL](#12-bật-loki-và-promtail-truy-vấn-logql)
-13. [SSH tunnel để xem monitoring từ Windows](#13-ssh-tunnel-để-xem-monitoring-từ-windows)
-14. [Đẩy code lên GitHub và lấy code về](#14-đẩy-code-lên-github-và-lấy-code-về)
-15. [Hardening và lưu ý an toàn](#15-hardening-và-lưu-ý-an-toàn)
-16. [Luồng demo nhanh](#16-luồng-demo-nhanh)
+1. Thành phần và địa chỉ truy cập
+2. Chuẩn bị Ubuntu và Windows
+3. Biến môi trường
+4. Chạy LMS lần đầu
+5. Cập nhật riêng website
+6. Tắt và bật lại hệ thống
+7. Kiểm tra lỗi 502
+8. phpMyAdmin và MySQL
+9. Backup và migration
+10. Kiểm thử ứng dụng
+11. Bật monitoring
+12. Bật logging và truy vấn LogQL
+13. SSH tunnel trên Windows
+14. GitHub
+15. Hardening
+16. Trình tự demo
 
-## 1. Thành phần và cổng truy cập
+## 1. Thành phần và địa chỉ truy cập
 
-| Thành phần | Vai trò | Cổng truy cập |
+| Dịch vụ | Vai trò | Địa chỉ/cổng trên Ubuntu |
 |---|---|---|
-| LMS qua Nginx | Website học trực tuyến | `8080` trên host → `80` trong Nginx |
-| phpMyAdmin | Giao diện quản lý MySQL | `8081` trên host → `80` trong container |
-| Ứng dụng Node.js | Xử lý nghiệp vụ LMS | `3000` nội bộ Docker, không publish trực tiếp |
-| MySQL | Lưu tài khoản, khóa học, bài học và dữ liệu LMS | `3306` nội bộ Docker, không publish trực tiếp |
-| Prometheus | Thu thập và truy vấn metrics | `127.0.0.1:9090` trên Ubuntu |
-| Grafana | Dashboard metrics và Explore cho Loki | `127.0.0.1:3000` trên Ubuntu |
-| Alertmanager | Nhận và hiển thị cảnh báo Prometheus | `127.0.0.1:9093` trên Ubuntu |
-| Loki | Lưu log tập trung | `3100` nội bộ Docker |
-| Promtail | Đọc Docker logs và gửi đến Loki | Nội bộ Docker; không publish ra host |
+| Nginx → LMS | Reverse proxy đến ứng dụng học trực tuyến | `http://localhost:8080/` |
+| phpMyAdmin | Giao diện quản lý MySQL | `http://localhost:8081/` |
+| App Node.js | Xử lý nghiệp vụ, kết nối MySQL | Cổng `3000` chỉ trong Docker |
+| MySQL | Lưu tài khoản, khóa học, bài học và tiến độ | Cổng `3306` chỉ trong Docker |
+| Prometheus | Thu thập metric và đánh giá alert rules | `http://127.0.0.1:9090/` |
+| Grafana | Dashboard Prometheus và Explore cho Loki | `http://127.0.0.1:3000/` |
+| Alertmanager | Nhận cảnh báo từ Prometheus | `http://127.0.0.1:9093/` |
+| Loki, Promtail | Lưu và thu thập log Docker | Chỉ trong Docker |
 
-Trên Ubuntu, website là `http://localhost:8080/` và phpMyAdmin là `http://localhost:8081/`. Từ Windows, thay `localhost` bằng IP VMware của Ubuntu, ví dụ `http://192.168.118.131:8080/`. Lấy IP hiện tại bằng `hostname -I`; chọn IP mạng mà Windows truy cập được, không chọn IP bridge Docker.
+Từ Windows, truy cập LMS/phpMyAdmin bằng `http://IP-UBUNTU:8080/` và `http://IP-UBUNTU:8081/`. Trên Ubuntu, chạy `hostname -I` để tìm IP VMware mà Windows truy cập được. Prometheus, Grafana và Alertmanager chỉ bind localhost Ubuntu; xem mục 13 để mở SSH tunnel.
 
-## 2. Chuẩn bị môi trường
+## 2. Chuẩn bị Ubuntu và Windows
 
-### Ubuntu
-
-Cần có Docker Engine và Docker Compose plugin. Kiểm tra:
+Trên Ubuntu cần Docker Engine và Docker Compose plugin:
 
 ```bash
 cd /home/duongpham/projects/lms-demo
@@ -54,153 +49,71 @@ docker version
 docker compose version
 ```
 
-`systemctl is-active docker` kiểm tra dịch vụ Docker; hai lệnh còn lại hiển thị phiên bản Docker Engine và Compose.
+Nếu Docker chưa chạy: `sudo systemctl start docker`. Để Docker tự bật theo Ubuntu: `sudo systemctl enable docker`.
 
-Nếu Docker chưa chạy:
-
-```bash
-sudo systemctl start docker
-```
-
-Nếu muốn Docker tự chạy sau khi Ubuntu khởi động:
-
-```bash
-sudo systemctl enable docker
-```
-
-### Windows/Docker Desktop (tùy chọn)
-
-Có thể chạy ứng dụng trên Windows bằng Docker Desktop, nhưng database/volume Windows tách biệt với Ubuntu. Mỗi môi trường có `.env`, container và volume MySQL riêng. Migration đã chạy trên Ubuntu không tự chạy trên Windows.
-
-Trong PowerShell, vào thư mục repository rồi tạo `.env` nếu chưa có:
+Trên Windows, có thể chạy **LMS cơ bản** qua Docker Desktop từ thư mục clone. Windows có `.env` và Docker volumes riêng; dữ liệu MySQL và migration trên Ubuntu không tự chuyển sang Windows.
 
 ```powershell
 Set-Location 'C:\Users\MY PC\Documents\AI\lms-demo'
 if (!(Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
-Điền các giá trị hợp lệ vào `.env` trước khi chạy. Không chép file `.env` từ máy khác nếu không cần thiết và không commit file này.
+Điền biến môi trường trước khi chạy. Nếu Windows báo thiếu bảng `ER_NO_SUCH_TABLE`, xem mục 9; không xóa volume để thử khắc phục.
 
-## 3. Cấu hình biến môi trường
+## 3. Biến môi trường
 
-Trong thư mục gốc dự án, tạo file cấu hình cục bộ từ mẫu:
+Chỉ tạo `.env` từ mẫu nếu chưa tồn tại:
 
 ```bash
 cd /home/duongpham/projects/lms-demo
 if [ ! -f .env ]; then cp .env.example .env; fi
 ```
 
-Mở `.env` bằng trình soạn thảo trên Ubuntu và đặt các giá trị riêng cho:
-
-- `MYSQL_ROOT_PASSWORD`: mật khẩu quản trị MySQL.
-- `MYSQL_PASSWORD`: mật khẩu user ứng dụng `lms_user`.
-- `SESSION_SECRET`: chuỗi bí mật ngẫu nhiên dài.
-- `COOKIE_SECURE=false`: phù hợp với website hiện đang chạy HTTP.
-- Các biến SMTP chỉ cần thiết nếu muốn gửi email khôi phục mật khẩu.
-
-Compose đọc các biến này để cấu hình dịch vụ. Không đưa giá trị thật vào README, lệnh chia sẻ công khai, ảnh chụp báo cáo hoặc GitHub. Kiểm tra cấu hình mà không in các giá trị đã nội suy:
+Mở `.env` để đặt `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD` (tài khoản `lms_user`) và `SESSION_SECRET` mạnh, khác nhau. Website dùng HTTP nên `COOKIE_SECURE=false`. Biến SMTP chỉ cần nếu muốn gửi thư đặt lại mật khẩu. Không đăng nội dung file hoặc mật khẩu lên GitHub và ảnh báo cáo.
 
 ```bash
 docker compose config --quiet
 ```
 
-Lệnh này chỉ kiểm tra cấu hình Compose và biến bắt buộc; **không** xác nhận container đã chạy, ứng dụng đã sẵn sàng hoặc database đã có đủ bảng/migration.
+Lệnh kiểm tra cú pháp và biến bắt buộc, **không** xác nhận app hoạt động hay database đã có đủ bảng.
 
-## 4. Khởi động LMS lần đầu
+## 4. Chạy LMS lần đầu
 
-Chạy tại thư mục có `docker-compose.yml`:
+Khi **chưa bật monitoring/logging** trên máy này:
 
 ```bash
 cd /home/duongpham/projects/lms-demo
 docker compose config --quiet
 docker compose up -d --build
 docker compose ps
-```
-
-Vai trò các lệnh:
-
-- `config --quiet`: kiểm tra cấu hình Compose.
-- `up -d --build`: build image ứng dụng nếu cần và khởi động các dịch vụ thuộc `docker-compose.yml` ở chế độ nền: MySQL, app, Nginx và phpMyAdmin.
-- `ps`: xem trạng thái các container.
-
-Lệnh trên **không tự bật Prometheus/Grafana hay Loki/Promtail**, vì các dịch vụ đó nằm trong Compose file riêng. Cảnh báo `Found orphan containers` thường có nghĩa là Compose file của lần chạy hiện tại không khai báo các container monitoring/logging đang tồn tại. Đây không nhất thiết là lỗi và không có nghĩa dữ liệu đã bị xóa; không thêm `--remove-orphans` nếu vẫn cần các dịch vụ đó.
-
-Sau khi app được tạo mới, khởi động lại Nginx để nó kết nối tới địa chỉ container app hiện tại, rồi kiểm tra health:
-
-```bash
 docker compose restart nginx
 curl -fsS http://localhost:8080/health
 ```
 
-Kết quả mong đợi:
+`up -d --build` build app và chạy bốn service cơ bản: `db`, `app`, `nginx`, `phpmyadmin`. `restart nginx` giúp proxy phân giải lại IP của app nếu app được tạo mới. Kết quả health mong đợi:
 
 ```json
 {"app":"ok","database":"ok"}
 ```
 
-`docker compose ps` có trạng thái `Started` chỉ cho biết container đã bắt đầu; health endpoint mới kiểm tra được app và kết nối database.
+Sau khi đã bật monitoring, **không dùng lệnh `docker compose up -d --build` chỉ với file cơ bản để cập nhật website**: DB có thể được tạo lại mà thiếu mạng monitoring. Dùng mục 5. Để bật toàn bộ các thành phần, dùng mục 11.
 
-Mở website và phpMyAdmin:
+## 5. Cập nhật riêng website
 
-- LMS: `http://localhost:8080/`
-- phpMyAdmin: `http://localhost:8081/`
-
-Trên Windows, dùng `http://IP-UBUNTU:8080/` và `http://IP-UBUNTU:8081/`.
-
-## 5. Cập nhật code và xử lý lỗi 502
-
-Sau khi lấy code mới về Ubuntu, nếu có thay đổi mã nguồn app:
+Sau khi sửa mã nguồn app, CSS, JavaScript hoặc EJS trên Ubuntu:
 
 ```bash
 cd /home/duongpham/projects/lms-demo
-git pull --ff-only
-docker compose config --quiet
-docker compose up -d --build
-docker compose ps
+docker compose up -d --no-deps --build app
 docker compose restart nginx
 curl -fsS http://localhost:8080/health
 ```
 
-App có thể được tạo lại với IP container mới trong khi Nginx vẫn chạy. Với cấu hình reverse proxy hiện tại, Nginx có thể còn giữ địa chỉ upstream cũ; `docker compose restart nginx` giúp Nginx phân giải lại service `app`. Lệnh này không xóa volume MySQL.
+`--no-deps` chỉ cập nhật service `app`, không tạo lại MySQL. Nếu chỉ nhận code mới từ GitHub, kiểm tra `git status --short` rồi chạy `git pull --ff-only` **trước** các lệnh trên; pull không lấy những thay đổi chưa được push. Nếu sửa Compose, Nginx hoặc cấu hình monitoring/logging thì dùng đủ các file Compose liên quan và `config --quiet` trước khi `up -d`.
 
-### Nếu website trả 502 Bad Gateway
+## 6. Tắt và bật lại hệ thống
 
-502 nghĩa là Nginx chưa nhận được phản hồi hợp lệ từ app upstream. Kiểm tra theo thứ tự:
-
-```bash
-cd /home/duongpham/projects/lms-demo
-docker compose ps -a
-docker compose logs --tail=80 app nginx db
-```
-
-- Nếu app đang chạy sau khi build lại, thử `docker compose restart nginx`, rồi gọi lại `/health`.
-- Nếu app thoát hoặc liên tục restart, xem log `app` để biết lỗi khởi động.
-- Nếu log có `ER_NO_SUCH_TABLE`, database đang thiếu bảng mà phiên bản app cần. Đây là vấn đề migration/schema, không khắc phục bằng cách restart Nginx.
-- Nếu log có lỗi kết nối MySQL, kiểm tra `db` đã healthy và cấu hình `.env` có đúng không; không in hoặc gửi mật khẩu khi chia sẻ log.
-
-Có thể kiểm tra riêng Nginx:
-
-```bash
-docker compose exec nginx nginx -t
-```
-
-Lệnh này kiểm tra cú pháp cấu hình Nginx bên trong container.
-
-## 6. Tắt và khởi động lại hệ thống
-
-### Dừng các dịch vụ LMS cơ bản
-
-```bash
-cd /home/duongpham/projects/lms-demo
-docker compose stop
-docker compose ps -a
-```
-
-`stop` dừng container nhưng giữ container, image và volume dữ liệu. Không cần chạy lệnh này trước mỗi lần tắt Ubuntu/VMware; hệ thống thường được dừng an toàn khi hệ điều hành tắt đúng cách.
-
-### Dừng cả monitoring và logging
-
-Nếu đã bật các Compose file monitoring/logging, dùng đầy đủ file và profile tương ứng:
+**Sau khi đã cấu hình monitoring và logging**, khởi động toàn bộ bằng các file tương ứng:
 
 ```bash
 cd /home/duongpham/projects/lms-demo
@@ -212,85 +125,45 @@ docker compose \
   -f docker-compose.logging.yml \
   --profile monitoring \
   --profile logging \
-  stop
+  up -d
 ```
 
-Lệnh `stop` không xóa dữ liệu. Tránh `docker compose down -v` vì `-v` xóa named volumes, trong đó có volume MySQL.
+Không cần `--build` nếu mã app không thay đổi. Kiểm tra bằng `docker compose ps` hoặc lệnh Compose đầy đủ ở trên với `ps` thay cho `up -d`; sau đó gọi `curl -fsS http://localhost:8080/health` và kiểm tra `mysql_up` ở mục 11.
 
-### Khởi động lại sau khi bật Ubuntu
+Nếu chủ động dừng toàn bộ, thay `up -d` bằng `stop` trong lệnh đầy đủ. `stop` giữ nguyên container và volume. Có thể tắt Ubuntu đúng cách bằng `sudo shutdown -h now` mà không cần chạy `stop` trước. Không dùng `docker compose down -v`: tùy chọn `-v` có thể xóa dữ liệu MySQL và lịch sử metric/log.
 
-Chỉ bật LMS cơ bản:
+Nếu chỉ dùng LMS cơ bản, `docker compose up -d` và `docker compose stop` là đủ. Khi đã có monitoring, ưu tiên lệnh đầy đủ ở trên để DB giữ cấu hình mạng monitoring.
+
+## 7. Kiểm tra lỗi 502
+
+`502 Bad Gateway` nghĩa là Nginx chưa kết nối được đến app. Kiểm tra:
 
 ```bash
-cd /home/duongpham/projects/lms-demo
-docker compose up -d
-docker compose ps
-curl -fsS http://localhost:8080/health
+docker compose ps -a app nginx db
+docker compose logs --tail=80 app nginx db
+curl -i http://localhost:8080/health
 ```
 
-Monitoring và logging đã bật trước đó cần được khởi động bằng các lệnh ở mục 11 và 12. Chúng không tự được thêm vào lệnh Compose cơ bản.
+- Nếu app vừa được tạo lại và đang chạy, thử `docker compose restart nginx` để Nginx nhận IP app mới.
+- Nếu app thoát/restart, xem log app; không chỉ restart Nginx.
+- Nếu log báo `ER_NO_SUCH_TABLE`, kiểm tra migration ở mục 9.
+- Nếu log báo lỗi MySQL, xem DB đã `healthy` chưa và đọc lỗi cụ thể. Không in mật khẩu khi chia sẻ log.
 
-## 7. Kiểm tra và chẩn đoán
+Kiểm tra riêng cú pháp Nginx bằng `docker compose exec nginx nginx -t`. Cảnh báo `Found orphan containers` xuất hiện khi chạy lệnh với file Compose cơ bản trong lúc monitoring/logging đang chạy; không dùng `--remove-orphans` chỉ để xóa cảnh báo này.
+
+## 8. phpMyAdmin và MySQL
+
+Mở `http://localhost:8081/` trên Ubuntu hoặc `http://IP-UBUNTU:8081/` trên Windows. Đăng nhập server `db`, user `lms_user`, mật khẩu `MYSQL_PASSWORD` trong `.env`, chọn database `lms_demo`. Tài khoản root chỉ dùng cho việc cần quyền quản trị.
 
 ```bash
-cd /home/duongpham/projects/lms-demo
-
-docker compose ps
-# Trạng thái các service thuộc Compose cơ bản.
-
-docker compose logs --tail=100 app nginx db phpmyadmin
-# 100 dòng log mới nhất của các service chính.
-
-curl -fsS http://localhost:8080/health
-# Kiểm tra ứng dụng và database thông qua Nginx.
-
-curl -I http://localhost:8080/
-# Xem mã HTTP và response headers.
-
-hostname -I
-# Xem địa chỉ IP của Ubuntu.
-```
-
-Nếu từ Windows không truy cập được nhưng `curl` trên Ubuntu thành công, kiểm tra IP mới của VM và kết nối mạng:
-
-```powershell
-Test-NetConnection IP-UBUNTU -Port 8080
-Test-NetConnection IP-UBUNTU -Port 8081
-```
-
-Thay `IP-UBUNTU` bằng IP thực tế, không nhập nguyên chữ đó.
-
-## 8. Sử dụng phpMyAdmin và kiểm tra MySQL
-
-Mở `http://localhost:8081/` trên Ubuntu hoặc `http://IP-UBUNTU:8081/` từ Windows. Đăng nhập bằng:
-
-- Server: `db`
-- Username: `lms_user`
-- Password: giá trị `MYSQL_PASSWORD` trong `.env`
-- Database: `lms_demo`
-
-Tài khoản root dùng giá trị `MYSQL_ROOT_PASSWORD` trong `.env`, chỉ dùng khi cần quyền quản trị cao hơn. Không cấu hình mật khẩu database trực tiếp trong README.
-
-Kiểm tra bảng bằng MySQL CLI:
-
-```bash
-cd /home/duongpham/projects/lms-demo
 docker compose exec db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES;"'
 ```
 
-Đếm dữ liệu mẫu:
+Lệnh liệt kê các bảng hiện có. MySQL có thể cảnh báo cách truyền mật khẩu qua command line; không chụp nội dung secret.
 
-```bash
-docker compose exec db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SELECT COUNT(*) AS users_count FROM users; SELECT COUNT(*) AS courses_count FROM courses;"'
-```
+## 9. Backup và migration
 
-Cảnh báo MySQL về mật khẩu trên command line có thể xuất hiện do cú pháp truyền biến vào client trong container; không dán giá trị secret vào terminal hoặc báo cáo.
-
-## 9. Backup và migration database
-
-### Backup trước migration
-
-Backup lưu ngoài repository để tránh commit dữ liệu database:
+`database/schema.sql` chỉ được MySQL thực thi khi khởi tạo volume **lần đầu**. Khi đã có volume, thay đổi trong file schema không tự cập nhật database. Trước khi chạy migration, tạo backup ngoài repository:
 
 ```bash
 cd /home/duongpham/projects/lms-demo
@@ -301,31 +174,17 @@ docker compose exec -T db sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" 
 test -s "$backup_file" && ls -lh "$backup_file"
 ```
 
-- `install -d -m 700`: tạo thư mục backup chỉ chủ sở hữu truy cập.
-- `umask 077`: tạo file mới với quyền riêng tư.
-- `mysqldump`: xuất database đang chạy ra file SQL.
-- `test -s`: xác nhận file backup tồn tại và không rỗng.
-
-### Migration
-
-`database/schema.sql` được MySQL dùng khi khởi tạo data directory lần đầu. Nếu volume `mysql_data` đã tồn tại, sửa `schema.sql` không tự cập nhật database đó. Dùng migration tương ứng với phiên bản code, chỉ chạy nếu chưa áp dụng migration đó.
-
-Các migration của dự án hiện có thể gồm `001_learning_features.sql` đến `006_teacher_account_status.sql`. Không chạy tất cả các migration một cách mù quáng: kiểm tra trạng thái schema, backup trước, đọc migration và chỉ áp dụng file còn thiếu.
-
-Ví dụ áp dụng **một migration đã xác nhận còn thiếu**:
+Kiểm tra bảng/cột hiện có, đọc file migration và chỉ áp dụng migration còn thiếu. Ví dụ, sau khi thay `TEN_MIGRATION.sql` bằng tên file thực tế:
 
 ```bash
-cd /home/duongpham/projects/lms-demo
 docker compose exec -T db sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < database/migrations/TEN_MIGRATION.sql
 ```
 
-Thay `TEN_MIGRATION.sql` bằng đúng tên file. Sau đó kiểm tra bảng/cột cần thiết. Nếu lệnh DDL báo lỗi, dừng lại và kiểm tra trạng thái thực tế; không chạy lại cả file SQL khi chưa biết câu lệnh nào đã thành công.
+Nếu có lỗi SQL giữa chừng, dừng và kiểm tra trạng thái database trước khi chạy lại. `docker compose config --quiet` và `up -d` không tự áp dụng migration.
 
-> **Quan trọng:** lỗi `ER_NO_SUCH_TABLE` sau khi chạy app mới thường có nghĩa database volume chưa được cập nhật schema. `docker compose up` và `docker compose config --quiet` không tự chạy các migration trong `database/migrations/`.
+## 10. Kiểm thử ứng dụng
 
-## 10. Chạy test ứng dụng
-
-Máy cần có Node.js và npm. Từ Ubuntu:
+Trên máy có Node.js/npm:
 
 ```bash
 cd /home/duongpham/projects/lms-demo/app
@@ -333,25 +192,11 @@ npm ci
 npm test
 ```
 
-`npm ci` cài đúng dependency theo `package-lock.json`; `npm test` chạy kiểm tra cú pháp và test đã khai báo. Không cài npm bằng `sudo apt install npm` nếu đã có Node/npm phù hợp từ môi trường quản lý phiên bản Node.
-
-Từ Windows PowerShell:
-
-```powershell
-Set-Location 'C:\Users\MY PC\Documents\AI\lms-demo\app'
-npm ci
-npm test
-```
-
-Kiểm tra whitespace trong thay đổi Git từ thư mục gốc:
-
-```bash
-git diff --check
-```
+Nếu Ubuntu không có Node/npm nhưng image app đã build, có thể chạy các test nằm **trong image hiện tại** bằng `docker compose exec app npm test`. Lưu ý image có thể không chứa thư mục `test` hoặc các test mới nhất; khi đó dùng môi trường test phù hợp và không xem kết quả chạy trên code cũ là bằng chứng cho code mới. Kiểm tra whitespace của thay đổi bằng `git diff --check` từ thư mục gốc.
 
 ## 11. Bật Prometheus, Grafana và Alertmanager
 
-Monitoring là Compose overlay riêng. Trên lần cài đầu, tạo credential riêng ngoài repository. Các lệnh sau tạo mật khẩu ngẫu nhiên và file cấu hình exporter; chúng không in mật khẩu ra màn hình:
+Chỉ trong **lần cài monitoring đầu tiên**, tạo credential ngoài repository. Không chạy lại khối này nếu monitoring đã hoạt động: tạo mật khẩu mới có thể khiến tài khoản và file Exporter không khớp.
 
 ```bash
 cd /home/duongpham/projects/lms-demo
@@ -366,81 +211,14 @@ printf '[client]\nuser=lms_monitor\npassword=%s\nhost=172.30.0.2\nport=3306\n' "
 chmod 600 "$monitor_dir/monitoring.env" "$monitor_dir/mysql-exporter.cnf"
 ```
 
-Chỉ chạy khối tạo credential một lần, trừ khi chủ động muốn đổi mật khẩu. Sau đó kiểm tra cấu hình và bật monitoring:
+Kiểm tra file đã có mà không in secret:
 
 ```bash
-docker compose \
-  --env-file .env \
-  --env-file "$HOME/lms-demo-backups/monitoring.env" \
-  -f docker-compose.yml \
-  -f docker-compose.monitoring.yml \
-  --profile monitoring \
-  config --quiet
-
-docker compose \
-  --env-file .env \
-  --env-file "$HOME/lms-demo-backups/monitoring.env" \
-  -f docker-compose.yml \
-  -f docker-compose.monitoring.yml \
-  --profile monitoring \
-  up -d
+test -f "$HOME/lms-demo-backups/monitoring.env" && echo 'monitoring.env đã có'
+test -f "$HOME/lms-demo-backups/mysql-exporter.cnf" && echo 'mysql-exporter.cnf đã có'
 ```
 
-Sau khi chạy:
-
-```bash
-docker compose \
-  --env-file .env \
-  --env-file "$HOME/lms-demo-backups/monitoring.env" \
-  -f docker-compose.yml \
-  -f docker-compose.monitoring.yml \
-  --profile monitoring \
-  ps
-```
-
-### Khởi động toàn bộ LMS, monitoring và logging
-
-Khi credential monitoring đã được tạo ở trên, dùng lệnh này để chạy cả ba Compose file cùng một lần:
-
-```bash
-cd /home/duongpham/projects/lms-demo
-docker compose --env-file .env --env-file "$HOME/lms-demo-backups/monitoring.env" \
-  -f docker-compose.yml -f docker-compose.monitoring.yml -f docker-compose.logging.yml \
-  --profile monitoring --profile logging up -d --build
-docker compose restart nginx
-curl -fsS http://localhost:8080/health
-```
-
-Lệnh này cần file `monitoring.env` đã tạo đúng chỗ. Nếu chỉ muốn chạy website và phpMyAdmin thì dùng lệnh ở mục 4; Prometheus/Grafana/Loki không được bật bởi lệnh Compose cơ bản.
-
-Địa chỉ trên Ubuntu:
-
-- Prometheus: `http://127.0.0.1:9090`
-- Grafana: `http://127.0.0.1:3000`
-- Alertmanager: `http://127.0.0.1:9093`
-
-Grafana user mặc định trong file tạo credential là `admin`; mật khẩu nằm trong file riêng `$HOME/lms-demo-backups/monitoring.env`. Không dán mật khẩu vào README hoặc gửi ảnh có thông tin đăng nhập.
-
-Kiểm tra MySQL exporter trong Prometheus bằng truy vấn `mysql_up`; giá trị `1` cho biết exporter kết nối được MySQL. `up{job="mysql"}` chỉ cho biết Prometheus scrape được exporter, không chứng minh exporter truy cập được database.
-
-Kiểm tra cú pháp alert rules:
-
-```bash
-docker compose \
-  --env-file .env \
-  --env-file "$HOME/lms-demo-backups/monitoring.env" \
-  -f docker-compose.yml \
-  -f docker-compose.monitoring.yml \
-  --profile monitoring \
-  run --rm --no-deps --entrypoint /bin/promtool prometheus \
-  check rules /etc/prometheus/rules.yml
-```
-
-## 12. Bật Loki và Promtail, truy vấn LogQL
-
-Logging dùng Compose overlay riêng. Cấu hình cần cả monitoring file vì Grafana cung cấp giao diện Explore và datasource Loki.
-
-Kiểm tra cấu hình đầy đủ:
+Khởi động **toàn bộ hệ thống**, gồm LMS, monitoring và logging, từ thư mục dự án:
 
 ```bash
 docker compose \
@@ -452,9 +230,35 @@ docker compose \
   --profile monitoring \
   --profile logging \
   config --quiet
+
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  up -d
 ```
 
-Khởi động Loki/Promtail (cùng với các service mà chúng phụ thuộc):
+Trên **lần cài đầu khi app chưa được build**, có thể dùng `up -d --build` ở lệnh đầy đủ này. Nếu app được tạo lại, chạy `docker compose restart nginx`. Không dùng `--build` thường xuyên chỉ để cập nhật website; xem mục 5.
+
+Trên Ubuntu: Prometheus `http://127.0.0.1:9090/`, Grafana `http://127.0.0.1:3000/`, Alertmanager `http://127.0.0.1:9093/`. Grafana đăng nhập với user từ `GRAFANA_ADMIN_USER`; mật khẩu nằm trong `monitoring.env`. Dashboard Grafana đọc metric từ Prometheus, ví dụ host/container, Nginx và MySQL. Prometheus đọc exporters; Alertmanager nhận alert từ Prometheus.
+
+Kiểm tra Prometheus sẵn sàng và MySQL Exporter kết nối DB:
+
+```bash
+curl -fsS http://localhost:9090/-/ready
+curl -fsS -G --data-urlencode 'query=mysql_up' \
+  http://localhost:9090/api/v1/query
+```
+
+Trong JSON, giá trị của `mysql_up` cần là `"1"`. `up{job="mysql"}=1` chỉ chứng minh Prometheus lấy được metric từ exporter; **không** chứng minh exporter truy cập MySQL. Nếu `mysql_up=0`, xem `docs/khac-phuc-mysql-exporter.md`: kiểm tra mạng `lms-demo_monitoring`, trạng thái DB và **log mới** của exporter. DB cần IP `172.30.0.2`, Exporter cần `172.30.0.12`; không xóa volume để sửa lỗi này.
+
+## 12. Bật Loki và Promtail, truy vấn LogQL
+
+Lệnh toàn bộ ở mục 11 đã bật Loki và Promtail. Nếu chỉ cần bật lại hai dịch vụ này:
 
 ```bash
 docker compose \
@@ -468,55 +272,29 @@ docker compose \
   up -d loki promtail
 ```
 
-Kiểm tra trạng thái và log:
-
-```bash
-docker compose \
-  --env-file .env \
-  --env-file "$HOME/lms-demo-backups/monitoring.env" \
-  -f docker-compose.yml \
-  -f docker-compose.monitoring.yml \
-  -f docker-compose.logging.yml \
-  --profile monitoring \
-  --profile logging \
-  ps loki promtail
-
-docker compose \
-  --env-file .env \
-  --env-file "$HOME/lms-demo-backups/monitoring.env" \
-  -f docker-compose.yml \
-  -f docker-compose.monitoring.yml \
-  -f docker-compose.logging.yml \
-  --profile monitoring \
-  --profile logging \
-  logs --tail=50 loki promtail
-```
-
-Grafana Explore → chọn datasource `Loki` → chọn khoảng thời gian phù hợp, ví dụ `Last 15 minutes`, rồi chạy các truy vấn:
+Grafana → **Explore** → datasource **Loki** → chọn khoảng thời gian có log, ví dụ **Last 15 minutes**. Ba truy vấn LogQL:
 
 ```logql
 {job="docker-json"}
 ```
 
-Hiển thị log Docker đã thu thập.
+Hiển thị log Docker Promtail đã gửi.
 
 ```logql
 {job="docker-json", stream="stderr"}
 ```
 
-Lọc log ghi ra `stderr`.
+Lọc log ghi ra stderr.
 
 ```logql
 {job="docker-json"} |= "GET /logql-demo-not-found HTTP/1.1"
 ```
 
-Tìm request kiểm tra đường dẫn không tồn tại. Truy vấn chỉ trả kết quả nếu đã tạo request và log còn trong khoảng thời gian chọn. Nhãn hiện tại là nhãn tổng quát `job="docker-json"`; không giả định đã có nhãn riêng `app`, `nginx` hoặc `db`.
+Tìm request minh họa tới đường dẫn không tồn tại. Truy vấn thứ ba chỉ có kết quả nếu đã tạo request và khoảng thời gian của Grafana bao gồm dòng log đó. Với cấu hình hiện tại, `job="docker-json"` là nhãn chung; không tự giả định có nhãn `app`, `nginx`, `db`.
 
-Loki và Promtail không publish cổng host. Grafana truy cập Loki qua mạng Docker.
+## 13. SSH tunnel trên Windows
 
-## 13. SSH tunnel để xem monitoring từ Windows
-
-Vì monitoring chỉ bind `127.0.0.1` trên Ubuntu, dùng PowerShell để mở tunnel. Thay `duongpham` và `IP-UBUNTU` bằng tài khoản/IP thực tế:
+Prometheus, Grafana và Alertmanager bind `127.0.0.1` trên Ubuntu. Trong PowerShell Windows, thay `IP-UBUNTU` bằng IP VMware hiện tại (ví dụ kiểm tra bằng `hostname -I` trên Ubuntu):
 
 ```powershell
 ssh -N `
@@ -526,32 +304,13 @@ ssh -N `
   duongpham@IP-UBUNTU
 ```
 
-Giữ cửa sổ PowerShell mở. Sau đó truy cập trên Windows:
+Giữ cửa sổ PowerShell mở. Trên Windows mở `http://127.0.0.1:9090/`, `http://127.0.0.1:3000/`, `http://127.0.0.1:9093/`. Nếu cổng 3000 Windows bị chiếm, dùng `-L 13000:127.0.0.1:3000` và mở `http://127.0.0.1:13000/`.
 
-- Prometheus: `http://127.0.0.1:9090`
-- Grafana: `http://127.0.0.1:3000`
-- Alertmanager: `http://127.0.0.1:9093`
+## 14. GitHub
 
-`-N` chỉ mở tunnel, không mở shell trên Ubuntu. Nếu cổng 3000 trên Windows đang bận, đổi số cổng ở vế trái, ví dụ `-L 13000:127.0.0.1:3000`, rồi truy cập `http://127.0.0.1:13000`.
+Repository lưu mã nguồn, `docker-compose*.yml`, cấu hình Nginx, Prometheus, Grafana, Loki/Promtail và tài liệu. Commit thể hiện ba mốc chính của đề: Nginx/phpMyAdmin (`5226c9d`), mở rộng Grafana monitoring (`c019777`; phần monitoring có từ commit trước), Loki/Promtail (`4970ff9`).
 
-## 14. Đẩy code lên GitHub và lấy code về
-
-### Đẩy thay đổi từ Ubuntu
-
-```bash
-cd /home/duongpham/projects/lms-demo
-git status --short
-git diff --check
-git add <file-hoac-thu-muc-can-luu>
-git diff --cached --name-only
-git diff --cached --check
-git commit -m "Mô tả ngắn gọn thay đổi"
-git push origin main
-```
-
-Kiểm tra danh sách staged trước khi commit. Không đưa `.env`, backup database, credential monitoring hoặc file log vào Git.
-
-### Lấy code mới về Ubuntu
+Khi muốn lấy code **đã push** về Ubuntu:
 
 ```bash
 cd /home/duongpham/projects/lms-demo
@@ -560,45 +319,26 @@ git pull --ff-only
 git log -1 --oneline
 ```
 
-`git pull --ff-only` chỉ lấy commit đã được push lên GitHub; nó không lấy thay đổi chưa commit từ máy khác. Nếu có thay đổi cục bộ chưa commit, kiểm tra chúng trước khi pull.
+Không đưa `.env`, `monitoring.env`, `mysql-exporter.cnf`, dữ liệu upload thực tế hoặc backup DB vào GitHub. Kiểm tra các file thay đổi bằng `git status --short` và `git diff --check`. Chỉ commit/push khi đã chủ động xác nhận nội dung cần lưu.
 
-### Lấy code về Windows
+## 15. Hardening
 
-```powershell
-Set-Location 'C:\Users\MY PC\Documents\AI\lms-demo'
-git status --short
-git pull --ff-only
-git log -1 --oneline
-```
+- App chạy user `node` không phải root (`app/Dockerfile`).
+- MySQL và app không publish cổng ra host; các service liên lạc qua Docker networks (`docker-compose.yml` và overlay monitoring).
+- Mật khẩu và session secret ở file môi trường cục bộ; Exporter dùng tài khoản MySQL riêng với quyền phục vụ thu thập metric.
+- Nginx thêm `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` (`infra/nginx/nginx.conf`).
+- Một số exporters dùng filesystem read-only, `cap_drop: ALL`, `no-new-privileges`; các cổng monitoring chỉ bind localhost Ubuntu.
+- Ứng dụng có CSRF protection và giới hạn tần suất cho các luồng nhạy cảm.
 
-## 15. Hardening và lưu ý an toàn
+Giới hạn hiện tại: website chưa có HTTPS/HSTS/CSP; phpMyAdmin mở cổng `8081` cho demo trong mạng tin cậy; Promtail cần quyền đọc log Docker trên host và đang chạy root. Không mô tả hệ thống có cảnh báo brute-force tự động nếu chưa cấu hình và kiểm thử đúng chuỗi alert → log.
 
-Các biện pháp đang có trong cấu hình dự án gồm:
+## 16. Trình tự demo
 
-- App container chạy user `node` thay vì root.
-- MySQL không publish cổng trực tiếp ra host; app kết nối bằng service name trong Docker network.
-- Credential lưu trong `.env` cục bộ; không commit `.env` lên GitHub.
-- Nginx áp dụng `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` và `Permissions-Policy`.
-- Ứng dụng có CSRF protection và rate limit cho các luồng nhạy cảm.
-- MySQL exporter dùng user riêng với quyền phục vụ việc scrape metrics.
-- Các cổng Prometheus, Grafana và Alertmanager chỉ bind localhost Ubuntu.
-- Một số exporter được cấu hình read-only, drop capabilities và `no-new-privileges`.
+1. Mở website qua Nginx cổng `8080`, kiểm tra khóa học và `/health`.
+2. Mở phpMyAdmin cổng `8081`, chọn `lms_demo`, chỉ ra các bảng dữ liệu.
+3. Trên Prometheus kiểm tra targets và `mysql_up=1`; trên Grafana trình bày CPU/RAM, container, Nginx và MySQL.
+4. Vào Grafana Explore → Loki, chạy 2–3 truy vấn LogQL ở mục 12.
+5. Dùng `curl -I http://localhost:8080/` chỉ ra security headers; trình bày app non-root, mạng DB nội bộ, cách giữ secret ngoài Git.
+6. Nếu demo một sự cố an toàn thông tin, dùng tài khoản thử nghiệm và đối chiếu thời điểm alert với log tương ứng. Chỉ tuyên bố Alertmanager phát cảnh báo cho sự cố đó nếu đã cấu hình và kiểm chứng thực tế.
 
-Lưu ý giới hạn:
-
-- Website hiện dùng HTTP; chưa bật HTTPS, HSTS hoặc CSP.
-- phpMyAdmin publish cổng 8081 để phục vụ demo; chỉ dùng trong mạng tin cậy.
-- Promtail chạy root để đọc Docker logs trên host; cần nêu rõ đây là quyền nhạy cảm.
-- Alert rules hiện tập trung vào hạ tầng. Không khẳng định Alertmanager cảnh báo trực tiếp brute-force nếu chưa triển khai và kiểm thử luồng đó.
-- File `.env`, `monitoring.env`, `mysql-exporter.cnf` và backup phải được giữ ngoài Git, với quyền file hạn chế.
-
-## 16. Luồng demo nhanh
-
-1. Mở LMS qua Nginx ở cổng 8080 và kiểm tra `/health`.
-2. Mở phpMyAdmin ở cổng 8081, chọn database `lms_demo` và trình bày các bảng LMS.
-3. Mở Grafana dashboard để trình bày CPU/RAM, container, Nginx và MySQL; đối chiếu `mysql_up=1` trên Prometheus.
-4. Vào Grafana Explore, chọn Loki và chạy ít nhất hai truy vấn LogQL ở mục 12.
-5. Trình bày các security headers bằng `curl -I http://localhost:8080/` và chỉ ra app non-root, mạng DB nội bộ, secret trong `.env` bị loại khỏi Git.
-6. Với tình huống đăng nhập sai, dùng tài khoản thử nghiệm. Có thể trình bày HTTP 429 và sự kiện log nếu đã tạo lại minh chứng. Chỉ nói Alertmanager phát cảnh báo cho sự cố này nếu đã cấu hình, kích hoạt và kiểm chứng trực tiếp.
-
-Không chụp hoặc trình chiếu mật khẩu, token phiên, nội dung `.env`, backup dữ liệu hay thông tin cá nhân không cần thiết.
+Khi chụp màn hình báo cáo, không để lộ mật khẩu, cookie phiên, token, backup hoặc dữ liệu cá nhân không cần thiết.

@@ -18,11 +18,13 @@ Nginx ──► Express app :3000 ──► MySQL :3306
 ```
 
 Nginx là cổng truy cập chính. App không publish trực tiếp cổng 3000 ra host; phpMyAdmin chạy ở cổng 8081 trong Compose chính.
+`docker-compose.yml` là stack LMS cơ bản gồm `app`, `db`, `nginx` và `phpmyadmin`. Monitoring và logging là Compose override/profile độc lập: `docker-compose.monitoring.yml` thêm Prometheus, Grafana, Alertmanager và exporter; `docker-compose.logging.yml` thêm Loki và Promtail. Vì vậy monitoring/logging không phải dependency để chạy website.
+
 
 ## Cấu trúc xử lý request
 
 1. Nginx chuyển request tới Express và thêm các security headers.
-2. `app/src/server.js` gán request ID, parse body, tạo session MySQL và đăng ký router.
+2. `app/src/server.js` gán request ID, parse body, tạo session MySQL và đăng ký router. `GET /health` trả `{"app":"ok","database":"ok"}` khi MySQL truy cập được; nếu không, app trả HTTP 503 với `database: "unavailable"`.
 3. `app/src/middleware/auth.js` đọc user từ session ở mỗi request, kiểm tra `is_active` và `session_version`.
 4. `app/src/middleware/csrf.js` cấp/kiểm tra CSRF cho các form thay đổi dữ liệu.
 5. Route kiểm tra role và phạm vi tài nguyên trước khi gọi query/service.
@@ -36,7 +38,7 @@ Nginx là cổng truy cập chính. App không publish trực tiếp cổng 3000
 | Khách | `/`, `/courses`, `/courses/:courseId`, auth | Xem trang chủ, catalog và chi tiết khóa published; đăng ký/đăng nhập. |
 | Student | `/student/...` | Đăng ký khóa, học bài, tiến độ, ghi chú, bookmark, quiz, lịch sử, hồ sơ. |
 | Teacher | `/teacher/...` | Tạo khóa draft, sửa metadata, quản lý lesson/quiz, xem học viên/review/kết quả trong khóa được phân công. |
-| Admin | `/admin/...` | Quản lý khóa, học viên, teacher, phân công, quiz, kết quả và Nhật ký bảo mật. |
+| Admin | `/admin/...` | Quản lý khóa, học viên, teacher, phân công, quiz và kết quả; security event vẫn ghi nội bộ nhưng UI nhật ký hiện tắt. |
 
 Đăng ký công khai luôn tạo `student`. Teacher chỉ có thể quản lý khóa có `courses.teacher_id` trùng tài khoản hiện tại; kiểm tra được thực hiện lại ở GET và POST nên đổi phân công có hiệu lực ở request kế tiếp.
 
@@ -48,21 +50,23 @@ Nginx là cổng truy cập chính. App không publish trực tiếp cổng 3000
 - `app/src/queries/`: truy vấn MySQL theo từng nghiệp vụ; `teacherQueries.js`, `securityQueries.js` và `userQueries.js` xử lý phần được bổ sung gần đây.
 - `app/src/services/`: nghiệp vụ quyền khóa học, LMS, quiz, rate limit, audit và trình bày security event.
 - `app/views/`: EJS; các view teacher/admin được tách theo khu vực.
-- `app/public/css/`: token/giao diện chung và CSS theo phạm vi, gồm `home.css`, `teacher.css`, `admin.css`.
+- `app/public/`: CSS/JS, SVG minh họa khóa học và vùng `uploads/` dành cho ảnh upload.
+- `app/public/css/`: token/giao diện chung và CSS theo phạm vi, gồm `home.css`, `catalog.css`, `course-media.css`, `teacher.css`, `admin.css`.
+- `app/public/js/`: tương tác auth/quiz/form và fallback ảnh bìa khi ảnh upload lỗi.
 - `database/schema.sql`: schema cho database cài mới.
 - `database/migrations/`: thay đổi tuần tự cho database đã tồn tại.
 - `infra/nginx/`: reverse proxy và security headers.
-- `infra/monitoring/`: cấu hình monitoring tùy chọn, không phải dependency của LMS cơ bản.
+- `infra/monitoring/`: Prometheus/Grafana/exporter tùy chọn; `infra/logging/`: Loki/Promtail tùy chọn.
 
 ## Nhật ký bảo mật
 
-`/admin/security-events` chỉ dành cho admin. Sự kiện quan trọng được lọc, phân trang 20 nhóm/trang và gộp theo cửa sổ thời gian. Chi tiết kỹ thuật nằm trong `<details>`, các giá trị nhạy cảm được che.
+Ứng dụng vẫn ghi security event, rate limit và cleanup theo cấu hình. Route giao diện `/admin/security-events` hiện được tắt có chủ đích (`SECURITY_EVENT_VIEW_ENABLED = false`) nên không được trình bày như một màn hình đang hoạt động; việc tắt UI không đồng nghĩa ngừng ghi audit nội bộ.
 
-Nguyên nhân lỗi trước đây là code đã truy vấn các cột gộp sự kiện nhưng database chưa có migration 005. Sau khi backup và áp dụng migration, route trả 200 khi admin truy cập; lỗi query vẫn được chuyển lên error handler, không bị biến thành danh sách rỗng giả.
+Các cột gộp security event thuộc migration 005; khi triển khai database hiện có cần kiểm tra migration đã áp dụng trước khi chạy phiên bản app tương ứng. Không suy ra trạng thái database của máy khác chỉ từ source code.
 
 ## Bảo vệ chính
 
-- Session MySQL dùng cookie `httpOnly`, `sameSite=lax`; `session_version` giúp vô hiệu phiên sau đổi mật khẩu hoặc khóa tài khoản.
+- Session MySQL dùng cookie `httpOnly`, `sameSite=lax`; `express-mysql-session` tạo/quản lý bảng `sessions`; `session_version` giúp vô hiệu phiên sau đổi mật khẩu hoặc khóa tài khoản.
 - Mật khẩu được hash bằng bcrypt; không đưa password vào audit hoặc view.
 - Các POST thay đổi dữ liệu yêu cầu CSRF.
 - Rate limit dùng bảng MySQL dùng chung; audit không lưu email/IP thô, token, cookie hoặc mật khẩu.

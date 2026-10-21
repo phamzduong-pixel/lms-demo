@@ -1,6 +1,6 @@
 # Cây thư mục và vai trò file
 
-Cây dưới đây tập trung vào các file có vai trò trong runtime, database, giao diện và kiểm thử của LMS Demo. `docs/commands.md` là tài liệu vận hành riêng và không được cập nhật trong đợt này.
+Cây dưới đây tập trung vào các file có vai trò trong runtime, database, giao diện, vận hành và kiểm thử của LMS Demo. `docs/host.md` và `docs/khac-phuc-mysql-exporter.md` nằm ngoài phạm vi cập nhật tài liệu này.
 
 ```text
 lms-demo/
@@ -14,15 +14,19 @@ lms-demo/
 │   │   │   ├── components.css         # Card, button, form, table, alert dùng chung
 │   │   │   ├── auth.css               # Login/register/forgot/reset password
 │   │   │   ├── catalog.css            # Catalog và filter toolbar
+│   │   │   ├── course-media.css       # Khung ảnh bìa và responsive cover
 │   │   │   ├── home.css               # Hero, featured course, FAQ, CTA trang chủ
 │   │   │   ├── student.css             # Dashboard, course learning, bookmarks/profile
 │   │   │   ├── quiz.css                # Quiz, history và kết quả
 │   │   │   ├── profile.css             # Bổ sung giao diện hồ sơ
 │   │   │   ├── admin.css               # Admin, security log và teacher management
 │   │   │   └── teacher.css             # Dashboard và khu vực teacher
-│   │   └── js/
-│   │       ├── auth.js                # Toggle mật khẩu và tương tác form auth
-│   │       └── quiz.js                # Điều hướng câu hỏi và xác nhận nộp quiz
+│   │   ├── js/
+│   │   │   ├── auth.js                # Toggle mật khẩu và tương tác form auth
+│   │   │   ├── course-images.js       # Fallback ảnh cover khi ảnh upload bị lỗi
+│   │   │   ├── course-form.js         # Preview ảnh upload trong form course
+│   │   │   └── quiz.js                # Điều hướng câu hỏi và xác nhận nộp quiz
+│   │   └── images/course-covers/      # SVG cover theo môn và ảnh mặc định
 │   ├── src/
 │   │   ├── server.js                  # Bootstrap Express, session, router, 404/error
 │   │   ├── db.js                      # MySQL connection pool
@@ -45,7 +49,7 @@ lms-demo/
 │   │   │   ├── adminQuizzes.js          # Admin quiz và kết quả
 │   │   │   ├── adminStudents.js         # Danh sách/chi tiết học viên
 │   │   │   ├── adminTeachers.js         # CRUD giới hạn: tạo/sửa/khóa/mật khẩu/phân công
-│   │   │   ├── adminSecurity.js         # Nhật ký bảo mật, filter và pagination
+│   │   │   ├── adminSecurity.js         # Security event/filter; giao diện nhật ký hiện tắt
 │   │   │   └── routeHelpers.js          # Parse ID, validation và format datetime
 │   │   ├── queries/
 │   │   │   ├── courseQueries.js         # Catalog, course và assignment
@@ -69,11 +73,13 @@ lms-demo/
 │   │   │   ├── passwordResetService.js  # Token/email reset password
 │   │   │   ├── rateLimitService.js      # Rate limit và cleanup
 │   │   │   ├── securityService.js       # Hash/redact/group và ghi audit
+│   │   │   ├── coverImageService.js     # Validate, lưu và dọn ảnh cover upload
 │   │   │   └── securityEventPresentation.js # Nhãn/mô tả/HTTP status cho admin UI
 │   │   └── scripts/
 │   │       └── create-admin.js          # Tạo admin bằng biến môi trường tạm thời
 │   ├── test/                            # Unit, query, permission, view và regression tests
 │   │   ├── securityRoute.test.js        # Regression lỗi query security không fallback HTTP 200
+│   │   ├── courseCoverFallback.test.js  # Mapping SVG cover và render fallback
 │   │   ├── teacher.test.js               # Quyền teacher và scope assignment
 │   │   ├── security*.test.js             # Audit, grouping, presentation, view
 │   │   ├── newViews.test.js              # Bookmark, quiz detail, error view
@@ -100,16 +106,18 @@ lms-demo/
 │       └── 006_teacher_account_status.sql   # is_active/session_version
 ├── infra/
 │   ├── nginx/nginx.conf                 # Reverse proxy, headers, access/error log
-│   └── monitoring/                      # Prometheus/Grafana/exporter cấu hình tùy chọn
+│   ├── monitoring/                      # Prometheus/Grafana/exporter cấu hình tùy chọn
+│   └── logging/                         # Loki/Promtail cấu hình tùy chọn
 ├── docker-compose.yml                   # App, MySQL, Nginx, phpMyAdmin
 ├── docker-compose.monitoring.yml        # Profile monitoring riêng
+├── docker-compose.logging.yml           # Profile logging riêng
 ├── docs/
 │   ├── architecture.md                  # Kiến trúc, request flow và quyền
 │   ├── database.md                      # Schema, quan hệ và migration
-│   ├── commands.md                      # Lệnh Windows/Ubuntu; giữ nguyên trong đợt này
+│   ├── commands.md                      # Lệnh LMS, cập nhật app, monitoring/logging và test
 │   ├── demo-guide.md                    # Luồng demo và checklist trình bày
 │   ├── project_tree.md                  # Cây thư mục và vai trò file
-│   └── local/                           # Ghi chú riêng, được bỏ qua bởi Git
+│   └── local/                           # Ghi chú tùy chọn; hiện chưa có file tài liệu
 └── README.md                            # Tổng quan và hướng dẫn dự án
 ```
 

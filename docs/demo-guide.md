@@ -2,7 +2,7 @@
 
 ## Chuẩn bị
 
-1. Khởi động Docker Compose và kiểm tra `/health`.
+1. Chạy `docker compose up -d` cho LMS cơ bản và kiểm tra `/health`; chỉ bật monitoring/logging nếu buổi demo cần quan sát hạ tầng.
 2. Tạo admin bằng script chỉ khi database chưa có admin; mật khẩu nhập qua environment tạm thời, không ghi vào tài liệu.
 3. Dùng dữ liệu demo riêng: một student, hai teacher và vài course/lesson/quiz. Không dùng tài khoản hoặc dữ liệu cá nhân thật.
 
@@ -12,6 +12,7 @@
 2. Khi chưa đăng nhập, CTA dẫn tới catalog và đăng ký; footer có link trang chủ, catalog, đăng nhập và đăng ký.
 3. Mở `/courses`: chỉ thấy khóa `published`, có tìm kiếm/lọc/sắp xếp.
 4. Mở `/courses/:courseId`: xem metadata và nội dung công khai; draft không bị lộ.
+5. Với khóa chưa có cover hợp lệ, kiểm tra ảnh minh họa theo tên môn; ảnh upload hợp lệ vẫn được ưu tiên.
 
 Nếu chưa có khóa published, trang chủ hiển thị trạng thái rỗng thay vì số liệu bịa đặt.
 
@@ -49,22 +50,24 @@ Không có endpoint xóa tài khoản teacher trong phạm vi hiện tại; dùn
 
 ## Luồng Nhật ký bảo mật
 
-1. Admin mở `/admin/security-events`; guest/student/teacher bị chặn.
-2. Mặc định xem event quan trọng, 20 nhóm/trang; có lọc ngày, loại, mức độ và phạm vi.
-3. Mở “Xem chi tiết” để xem request ID, HTTP, route và JSON đã được che dữ liệu nhạy cảm.
-4. Các event lặp hiển thị số lần và thời điểm đầu/cuối thay vì tạo từng dòng riêng.
-5. HTTP 302 được hiểu là chuyển hướng, 403 là bị từ chối, 429 là vượt giới hạn; không coi mọi mã khác 200 là lỗi hệ thống.
+1. Ứng dụng vẫn ghi security event, rate limit và cleanup nội bộ theo cấu hình.
+2. Route giao diện `/admin/security-events` hiện đang tắt có chủ đích và trả 404, kể cả admin; không trình bày đây là màn hình đang hoạt động.
+3. Có thể giải thích sự khác nhau giữa audit nội bộ, metrics Prometheus và log Loki/Promtail khi bật các profile tương ứng.
+4. HTTP 302 là chuyển hướng, 403 là bị từ chối, 429 là vượt giới hạn; không coi mọi mã khác 200 là lỗi hệ thống.
 
-Nguyên nhân lỗi cũ của trang này là database thiếu các cột migration 005 trong khi query đã dùng chúng. Sau backup, migration 005 đã được áp dụng; migration 006 bổ sung trạng thái tài khoản teacher.
+Trạng thái migration 005/006 phải được kiểm tra trực tiếp trên database trước khi demo chức năng phụ thuộc vào chúng.
 
-## Kiểm thử đã thực hiện
+## Kiểm tra trước khi trình bày
 
-- `npm test`: 82/82 đạt, gồm regression test bảo đảm lỗi query security không bị che thành HTTP 200 rỗng.
-- `git diff --check`: đạt.
-- HTTP thực tế: `/health`, `/`, `/courses` trả 200; guest vào security events bị 302; admin thử nghiệm vào security events và teacher management trả 200.
-- Thiếu CSRF trả 403; teacher bị khóa không đăng nhập được; session teacher cũ bị mất quyền sau khi admin khóa.
-- Tài khoản và dữ liệu thử đã được dọn sau kiểm thử.
-- Đã build app, restart Nginx và kiểm tra lại `/health`.
+```bash
+cd /home/duongpham/projects/lms-demo/app
+npm test
+cd ..
+git diff --check
+curl -fsS http://localhost:8080/health
+```
+
+Test mock/render không thay thế kiểm tra HTTP và browser. Không ghi kết quả của một máy/database cụ thể như trạng thái chung của dự án.
 
 Chưa kiểm tra trực quan bằng trình duyệt desktop/mobile; kết quả responsive cần được xác nhận thêm bằng browser ở các kích thước mục tiêu.
 
@@ -76,7 +79,7 @@ Chưa kiểm tra trực quan bằng trình duyệt desktop/mobile; kết quả r
 - [ ] Admin tạo course/lesson/quiz và publish.
 - [ ] Admin tạo teacher, phân công, sửa và khóa/mở khóa tài khoản.
 - [ ] Teacher chỉ thao tác trong course được phân công.
-- [ ] Nhật ký bảo mật có filter, pagination, grouped count và details.
+- [ ] Xác nhận security UI đang tắt; nếu demo monitoring, phân biệt metrics với log và audit nội bộ.
 - [ ] Không trình bày password, token, cookie, email hoặc IP thật.
 
 ## Giới hạn

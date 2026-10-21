@@ -1,11 +1,21 @@
 # Database LMS Demo
 
-## Nguồn schema và trạng thái hiện tại
+## Nguồn schema và cách xác minh
 
-- `database/schema.sql` dùng cho database mới và đã bao gồm role `teacher`, `courses.teacher_id`, `users.is_active` và `users.session_version`.
-- Các bảng security và các thay đổi tuần tự không được tự chạy khi `docker compose up`; database hiện có phải áp dụng migration thủ công.
-- Database hiện tại đã có các thay đổi tương ứng migration 001 đến 006. Đã kiểm tra trực tiếp sự tồn tại của `teacher`, `teacher_id`, các cột gộp security event và cột trạng thái user.
-- Dự án chưa có bảng theo dõi lịch sử migration riêng; vì vậy cần kiểm tra `information_schema` trước khi áp dụng trên database khác.
+- `database/schema.sql` là schema cho database mới; hiện đã mô tả role `teacher`, `courses.teacher_id`, `users.is_active`, `users.session_version` và các bảng học tập.
+- Các file trong `database/migrations/` không tự chạy khi `docker compose up`; database đã tồn tại phải được backup, kiểm tra và áp dụng thủ công theo thứ tự.
+- Repository không có bảng lịch sử migration riêng. Không thể suy ra trạng thái database đang chạy chỉ từ source code; cần kiểm tra trực tiếp bằng MySQL trước khi áp dụng file.
+
+Ví dụ kiểm tra các phần quan trọng:
+
+```sql
+SHOW COLUMNS FROM users;
+SHOW COLUMNS FROM courses;
+SHOW COLUMNS FROM security_events;
+SHOW TABLES LIKE 'security_rate_limits';
+SHOW TABLES LIKE 'sessions';
+```
+
 
 ## Bảng chính
 
@@ -37,14 +47,14 @@
 
 | File | Nội dung | Trạng thái database hiện tại |
 |---|---|---|
-| `001_learning_features.sql` | Note, bookmark, quiz, review và metadata catalog. | Đã có schema tương ứng. |
-| `002_quiz_submission_key.sql` | Khóa chống nộp quiz trùng. | Đã có schema tương ứng. |
-| `003_security_monitoring.sql` | `security_rate_limits` và `security_events`. | Đã áp dụng. |
-| `004_teacher_roles.sql` | Role `teacher` và `courses.teacher_id`. | Đã áp dụng. |
-| `005_security_event_compaction.sql` | `group_key`, `occurrence_count`, `first_seen_at`, `last_seen_at`. | Đã áp dụng sau backup. |
-| `006_teacher_account_status.sql` | `users.is_active`, `users.session_version` và index trạng thái. | Đã áp dụng sau backup. |
+| `001_learning_features.sql` | Note, bookmark, quiz, review và metadata catalog. | Cần đối chiếu trực tiếp trên database. |
+| `002_quiz_submission_key.sql` | Khóa chống nộp quiz trùng. | Cần đối chiếu trực tiếp trên database. |
+| `003_security_monitoring.sql` | `security_rate_limits` và `security_events`. | Cần đối chiếu trực tiếp trên database. |
+| `004_teacher_roles.sql` | Role `teacher` và `courses.teacher_id`. | Cần đối chiếu trực tiếp trên database. |
+| `005_security_event_compaction.sql` | `group_key`, `occurrence_count`, `first_seen_at`, `last_seen_at`. | Cần đối chiếu trực tiếp trên database. |
+| `006_teacher_account_status.sql` | `users.is_active`, `users.session_version` và index trạng thái. | Cần đối chiếu trực tiếp trên database. |
 
-Migration 005 giữ nguyên các event cũ: mỗi dòng cũ được gán `first_seen_at = last_seen_at = created_at` và `occurrence_count = 1`. Migration 006 chỉ thêm cột có giá trị mặc định, không xóa dữ liệu học tập.
+Migration 005 giữ nguyên các event cũ: mỗi dòng cũ được gán `first_seen_at = last_seen_at = created_at` và `occurrence_count = 1`. Migration 006 chỉ thêm cột có giá trị mặc định, không xóa dữ liệu học tập. Đây là hành vi được mô tả trong file migration, không phải xác nhận database production đã chạy chúng.
 
 ## Audit và retention
 
