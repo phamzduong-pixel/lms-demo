@@ -8,7 +8,7 @@
 </section>
 <section class="quiz-results">
 <% answers.forEach((answer,index)=>{ %>
-<article class="card">
+<article class="card quiz-result-card <%= Number(answer.is_correct)===1 ? "is-correct" : "is-wrong" %>">
 <h2>Câu <%= index+1 %>
 </h2>
 <p>

@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /teacher/
+Disallow: /student/
+Disallow: /health

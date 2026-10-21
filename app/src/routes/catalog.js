@@ -3,19 +3,20 @@ const pool = require("../db");
 const courseQueries = require("../queries/courseQueries");
 const reviewQueries = require("../queries/reviewQueries");
 const { getPublicCourse } = require("../services/lmsService");
-const { parseId, renderError } = require("./routeHelpers");
+const { parseId, renderError, getSafeCoverImageUrl } = require("./routeHelpers");
 
 const router = express.Router();
+function presentCourse(course) { return { ...course, cover_image_url: getSafeCoverImageUrl(course.cover_image_url) }; }
 
 router.get("/", async (req, res) => {
   const courses = await courseQueries.listPublished(pool, { sort: "newest" });
-  res.render("home", { title: "LMS Demo", featuredCourses: courses.slice(0, 6) });
+  res.render("home", { title: "LMS Demo", featuredCourses: courses.slice(0, 6).map(presentCourse) });
 });
 
 router.get("/courses", async (req, res) => {
   const filters = courseQueries.catalogFilters({ search: req.query.q, category: req.query.category, level: req.query.level, sort: req.query.sort });
   const [courses, categories] = await Promise.all([courseQueries.listPublished(pool, filters), courseQueries.listPublishedCategories(pool)]);
-  res.render("courses/index", { title: "Khóa học", courses, categories, filters, search: filters.search });
+  res.render("courses/index", { title: "Khóa học", courses: courses.map(presentCourse), categories, filters, search: filters.search });
 });
 
 router.get("/courses/:courseId", async (req, res) => {
@@ -29,9 +30,11 @@ router.get("/courses/:courseId", async (req, res) => {
     reviewQueries.listPublic(pool, courseId),
     data.enrolled ? reviewQueries.findOwn(pool, userId, courseId) : null
   ]);
+  const course = presentCourse(data.course);
   res.render("courses/show", {
-    title: data.course.title,
+    title: course.title,
     ...data,
+    course,
     reviewSummary,
     reviews,
     ownReview,

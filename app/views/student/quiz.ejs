@@ -13,14 +13,16 @@
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <input type="hidden" name="submission_key" value="<%= submissionKey %>">
     <section class="card quiz-overview" aria-label="Tiến độ bài kiểm tra">
-      <div><strong data-answer-count>Đã trả lời 0/<%= questions.length %> câu</strong><p class="muted" data-quiz-status role="status" aria-live="polite">Chọn một đáp án cho mỗi câu trước khi nộp.</p></div>
       <progress value="0" max="<%= questions.length %>" data-quiz-progress></progress>
       <nav class="quiz-question-nav" aria-label="Đi tới câu hỏi"><% questions.forEach((question, index) => { %><a href="#quiz-question-<%= question.id %>" data-question-link="<%= question.id %>"><%= index + 1 %></a><% }) %></nav>
+      <div class="quiz-overview-status"><strong data-answer-count>Đã trả lời 0/<%= questions.length %> câu</strong><p class="muted" data-quiz-status role="status" aria-live="polite">Chọn một đáp án cho mỗi câu trước khi nộp.</p></div>
+      <div class="quiz-overview-actions"><button class="button" type="submit" data-quiz-submit>Nộp bài</button></div>
     </section>
     <section class="quiz-questions">
       <% questions.forEach((question, index) => { %>
-        <fieldset class="card quiz-question <%= quizMissingQuestionIds.includes(Number(question.id)) ? "has-missing-answer" : "" %>" id="quiz-question-<%= question.id %>" data-question-id="<%= question.id %>">
+        <fieldset class="card quiz-question <%= quizMissingQuestionIds.includes(Number(question.id)) ? "has-missing-answer" : "" %>" id="quiz-question-<%= question.id %>" data-question-id="<%= question.id %>" aria-labelledby="quiz-question-title-<%= question.id %>">
           <legend>Câu <%= index + 1 %>. <%= question.question_text %></legend>
+          <h2 class="quiz-question-title" id="quiz-question-title-<%= question.id %>">Câu <%= index + 1 %>. <%= question.question_text %></h2>
           <div class="quiz-options">
             <% question.options.forEach((option) => { const optionId = "option-" + question.id + "-" + option.id; const checked = Number(selectedAnswers[question.id]) === Number(option.id); %>
               <label class="quiz-option <%= checked ? "is-selected" : "" %>" for="<%= optionId %>">
@@ -32,7 +34,7 @@
         </fieldset>
       <% }) %>
     </section>
-    <div class="quiz-submit-row"><button class="button" type="submit" data-quiz-submit>Nộp bài</button><a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Lịch sử làm bài</a></div>
+    <div class="quiz-submit-row"><a class="button secondary" href="/student/courses/<%= course.id %>/quiz/history">Lịch sử làm bài</a></div>
     <div class="quiz-confirm" data-quiz-confirm hidden>
       <div class="quiz-confirm-backdrop" data-quiz-confirm-cancel></div>
       <section class="quiz-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="quiz-confirm-title" aria-describedby="quiz-confirm-copy">

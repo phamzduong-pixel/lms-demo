@@ -1,9 +1,9 @@
-<% const pageStyles = ["home.css"]; %>
+<% const pageStyles = ["home.css", "course-media.css"]; const pageScripts = ["course-images.js"]; %>
 <%- include("header", { pageStyles }) %>
 <section class="home-hero" aria-labelledby="home-title">
   <div class="home-hero-copy">
     <p class="eyebrow">NỀN TẢNG HỌC TẬP TRỰC TUYẾN</p>
-    <h1 id="home-title">Học đúng trọng tâm, tiến bộ từng bước.</h1>
+    <h1 id="home-title">Học hiệu quả, tiến bộ từng bước.</h1>
     <p class="home-hero-lead">LMS Demo giúp học viên tìm khóa học, học theo bài, làm quiz và theo dõi kết quả trong một không gian rõ ràng.</p>
     <div class="actions">
       <% if (!currentUser) { %>
@@ -46,6 +46,10 @@
     <div class="home-course-grid">
       <% featuredCourses.forEach((course) => { %>
         <article class="card home-course-card">
+          <div class="course-cover-frame <%= course.cover_image_url ? "" : "is-placeholder" %>" data-cover-frame<% if (!course.cover_image_url) { %> role="img" aria-label="Khóa học chưa có ảnh bìa"<% } %>>
+            <% if (course.cover_image_url) { %><img class="course-cover" data-course-cover src="<%= course.cover_image_url %>" alt="Ảnh bìa khóa <%= course.title %>"><% } %>
+            <span class="course-cover-placeholder" aria-hidden="true">Chưa có ảnh bìa</span>
+          </div>
           <span class="badge published"><%= course.category %> · <%= course.level %></span>
           <h3><a href="/courses/<%= course.id %>"><%= course.title %></a></h3>
           <p><%= course.short_description || course.description || "Khóa học chưa có mô tả." %></p>
