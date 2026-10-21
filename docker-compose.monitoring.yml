@@ -121,14 +121,15 @@ services:
     image: prom/mysqld-exporter:v0.15.1
     restart: unless-stopped
     user: "${MYSQL_EXPORTER_UID:-1000}:${MYSQL_EXPORTER_GID:-1000}"
-    command: ["--config.my-cnf=/etc/mysql-exporter/.my.cnf", "--mysqld.address=172.30.0.2:3306"]
+    command: ["--config.my-cnf=/etc/mysql-exporter/.my.cnf"]
     expose: ["9104"]
     read_only: true
     security_opt: ["no-new-privileges:true"]
     cap_drop: ["ALL"]
     volumes:
-      - ${MYSQL_EXPORTER_CNF_PATH:?Set MYSQL_EXPORTER_CNF_PATH before enabling monitoring}:/etc/mysql-exporter/.my.cnf:ro
+      - "${MYSQL_EXPORTER_CNF_PATH:?Set MYSQL_EXPORTER_CNF_PATH before enabling monitoring}:/etc/mysql-exporter/.my.cnf:ro"
     networks:
+      default: {}
       monitoring:
         ipv4_address: 172.30.0.12
     depends_on:
