@@ -3,6 +3,7 @@
 1. Quy ước môi trường
 2. Windows: kết nối Ubuntu
 3. Ubuntu: khởi động sau khi bật máy
+3.1 Ubuntu: khởi động toàn bộ LMS, monitoring và logging
 4. Ubuntu: cập nhật sau khi sửa code
 5. Ubuntu: dừng và tắt máy an toàn
 6. Ubuntu: xem trạng thái và chẩn đoán lỗi
@@ -15,7 +16,7 @@
 13. Git: lấy code GitHub về Ubuntu hoặc Windows
 14. Ghi chú riêng và docs
 15. Ubuntu: tài nguyên máy và dung lượng
-16. Monitoring tùy chọn
+16. Monitoring tùy chọn: Prometheus, Grafana và Alertmanager
 17. Windows: SSH tunnel monitoring
 18. Windows: chuyển tài liệu giữa hai máy
 19. Quy trình nhanh hằng ngày
@@ -167,6 +168,199 @@ hostname -I
 ```
 
 Mục đích: xem các IP của máy. Dùng IP mạng VMware mà Windows truy cập được; không dùng IP bridge Docker dạng `172.x.x.x`.
+
+## 3.1 Ubuntu: khởi động toàn bộ LMS, monitoring và logging
+
+### Vào đúng thư mục dự án
+
+```bash
+cd /home/duongpham/projects/lms-demo
+pwd
+ls -l docker-compose.yml
+```
+
+Mục đích:
+
+- `cd`: chuyển vào thư mục dự án.
+- `pwd`: xác nhận vị trí hiện tại.
+- `ls`: xác nhận file Compose chính tồn tại.
+
+Lỗi `no configuration file provided: not found` thường xảy ra khi chạy Docker Compose ở sai thư mục.
+
+### Kiểm tra Docker
+
+```bash
+systemctl is-active docker
+docker info
+```
+
+Mục đích: kiểm tra Docker Engine đang hoạt động và Ubuntu kết nối được với Docker.
+
+Nếu Docker chưa hoạt động:
+
+```bash
+sudo systemctl start docker
+```
+
+Lệnh này khởi động Docker Engine. Nếu muốn Docker tự khởi động cùng Ubuntu:
+
+```bash
+sudo systemctl enable docker
+```
+
+Lệnh này bật Docker tự khởi động mỗi lần Ubuntu khởi động.
+
+### Kiểm tra file môi trường
+
+```bash
+test -f .env && echo ".env đã có"
+test -f "$HOME/lms-demo-backups/monitoring.env" && echo "monitoring.env đã có"
+```
+
+Mục đích: xác nhận có các file môi trường cần cho LMS và monitoring. Không in nội dung các file này ra màn hình vì chúng có thể chứa mật khẩu hoặc secret.
+
+### Kiểm tra cấu hình toàn bộ hệ thống
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  config --quiet
+```
+
+Mục đích: kiểm tra cú pháp Compose và các biến môi trường cần thiết. Lệnh này không khởi động container và không in toàn bộ cấu hình.
+
+Trong lệnh trên:
+
+- `docker-compose.yml`: cấu hình LMS, MySQL, Nginx và phpMyAdmin.
+- `docker-compose.monitoring.yml`: cấu hình Prometheus, Grafana, Alertmanager và exporters.
+- `docker-compose.logging.yml`: cấu hình Loki và Promtail.
+- `--profile monitoring` và `--profile logging`: bật các dịch vụ monitoring và logging.
+- `--env-file`: nạp cấu hình từ file môi trường, không đưa mật khẩu trực tiếp vào lệnh.
+
+### Khởi động toàn bộ hệ thống
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  up -d
+```
+
+Mục đích: khởi động toàn bộ LMS, monitoring và logging ở chế độ nền. Lệnh này không xóa container hoặc volume dữ liệu.
+
+Vai trò của các dịch vụ:
+
+| Dịch vụ | Vai trò |
+|---|---|
+| `app` | Chạy website LMS bằng Node.js/Express. |
+| `db` | MySQL lưu tài khoản, khóa học, bài học và dữ liệu học tập. |
+| `nginx` | Reverse proxy nhận yêu cầu website và chuyển tiếp tới ứng dụng. |
+| `phpmyadmin` | Giao diện quản lý cơ sở dữ liệu MySQL. |
+| `prometheus` | Thu thập và lưu metrics theo thời gian. |
+| `grafana` | Hiển thị metrics bằng dashboard, hỗ trợ truy vấn Prometheus và Loki. |
+| `alertmanager` | Nhận và quản lý cảnh báo do Prometheus gửi. |
+| `node-exporter` | Cung cấp metrics của máy Ubuntu như CPU, RAM và dung lượng đĩa. |
+| `cadvisor` | Cung cấp metrics tài nguyên của Docker container. |
+| `mysql-exporter` | Cung cấp metrics từ MySQL cho Prometheus. |
+| `nginx-exporter` | Cung cấp metrics hoạt động của Nginx. |
+| `blackbox-exporter` | Kiểm tra endpoint HTTP của LMS. |
+| `loki` | Lưu trữ log tập trung. |
+| `promtail` | Đọc log Docker và gửi log tới Loki. |
+
+### Kiểm tra trạng thái container
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  ps
+```
+
+Mục đích: xem trạng thái các dịch vụ trong toàn bộ hệ thống. `Up` nghĩa là container đang chạy; `healthy` cho biết health check của dịch vụ đã đạt.
+
+Nếu một dịch vụ không chạy, xem log của dịch vụ đó. Ví dụ kiểm tra app, Prometheus hoặc Loki:
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  -f docker-compose.logging.yml \
+  --profile monitoring \
+  --profile logging \
+  logs --tail=50 app prometheus grafana loki promtail
+```
+
+### Kiểm tra ứng dụng và database
+
+```bash
+curl -fsS http://localhost:8080/health
+```
+
+Mục đích: kiểm tra ứng dụng thông qua Nginx và kết nối tới MySQL. Kết quả mong đợi:
+
+```json
+{"app":"ok","database":"ok"}
+```
+
+### Địa chỉ truy cập
+
+Trên Ubuntu:
+
+| Thành phần | Địa chỉ | Vai trò |
+|---|---|---|
+| Website LMS | <http://localhost:8080> | Truy cập hệ thống học trực tuyến. |
+| phpMyAdmin | <http://localhost:8081> | Quản lý MySQL bằng giao diện web. |
+| Prometheus | <http://127.0.0.1:9090> | Truy vấn metrics và kiểm tra targets/alerts. |
+| Prometheus Targets | <http://127.0.0.1:9090/targets> | Xem Prometheus có thu thập metrics từ các nguồn hay không. |
+| Prometheus Alerts | <http://127.0.0.1:9090/alerts> | Xem trạng thái các alert rules. |
+| Grafana | <http://127.0.0.1:3000> | Xem dashboard giám sát và truy vấn Prometheus/Loki. |
+| Alertmanager | <http://127.0.0.1:9093> | Xem cảnh báo Prometheus gửi tới Alertmanager. |
+
+Prometheus, Grafana và Alertmanager chỉ mở trên localhost Ubuntu. Để mở chúng từ Windows, dùng SSH tunnel trong mục 17.
+
+Tài khoản Grafana được cấu hình trong file:
+
+```text
+$HOME/lms-demo-backups/monitoring.env
+```
+
+Không ghi mật khẩu vào tài liệu hoặc GitHub.
+
+### Xem IP Ubuntu
+
+```bash
+hostname -I
+```
+
+Mục đích: xem các địa chỉ IP của Ubuntu. Khi truy cập website từ Windows, dùng IP mạng VMware mà Windows kết nối được, không dùng IP Docker dạng `172.x.x.x`.
+
+Nếu chỉ muốn chạy LMS mà không bật monitoring và logging, có thể dùng cấu hình cơ bản:
+
+```bash
+docker compose up -d
+docker compose ps
+curl -fsS http://localhost:8080/health
+```
+
+Cấu hình cơ bản này không khởi động Prometheus, Grafana, Loki hoặc Promtail.
 
 ## 4. Ubuntu: cập nhật sau khi sửa code
 
@@ -655,66 +849,261 @@ Mục đích: xem tổng dung lượng backup trước khi quyết định lưu 
 
 Không xóa backup mới nhất hoặc volume khi chưa xác định rõ dữ liệu cần giữ.
 
-## 16. Monitoring tùy chọn
+## 16. Monitoring tùy chọn: Prometheus, Grafana và Alertmanager
 
-Các lệnh dưới đây phải khớp file Compose, profile và cách truyền
-biến môi trường thực tế của dự án.
+Monitoring là nhóm dịch vụ theo dõi tình trạng máy Ubuntu, container, Nginx, ứng dụng LMS và MySQL.
 
-```bash
-docker compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile monitoring config --quiet
-```
-
-Mục đích: kiểm tra cấu hình kết hợp ứng dụng và monitoring.
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile monitoring up -d
-```
-
-Mục đích: khởi động các service được bật trong cấu hình monitoring.
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile monitoring ps
-```
-
-Mục đích: xem trạng thái các service.
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.monitoring.yml --profile monitoring exec prometheus promtool check rules /etc/prometheus/rules.yml
-```
-
-Mục đích: kiểm tra cú pháp rule Prometheus; chưa chứng minh cảnh báo thực tế hoạt động.
-
-Nếu có file môi trường monitoring riêng, bổ sung đúng `--env-file`
-theo cấu hình triển khai. Không in nội dung file secret.
-
-## 17. Windows: SSH tunnel monitoring
-
-```powershell
-ssh -N -L 9090:127.0.0.1:9090 -L 3000:127.0.0.1:3000 -L 9093:127.0.0.1:9093 duongpham@192.168.118.131
-```
-
-Mục đích:
-- `-N`: chỉ tạo tunnel.
-- `-L`: chuyển cổng Ubuntu về Windows.
-- Giữ cửa sổ PowerShell mở trong lúc sử dụng.
-
-Truy cập:
-
-| Service | URL trên Windows |
+| Thành phần | Vai trò |
 |---|---|
-| Prometheus | http://localhost:9090 |
-| Grafana | http://localhost:3000 |
-| Alertmanager | http://localhost:9093 |
+| Prometheus | Thu thập và lưu metrics theo thời gian; kiểm tra target và đánh giá alert rules. |
+| Grafana | Hiển thị metrics thành dashboard, biểu đồ và cho phép truy vấn Prometheus hoặc Loki. |
+| Alertmanager | Nhận và gom nhóm cảnh báo do Prometheus phát ra. Cấu hình hiện tại chưa gửi thông báo ra email, Telegram hay Slack. |
+| Node Exporter | Cung cấp metrics của máy Ubuntu như CPU, RAM và filesystem. |
+| cAdvisor | Cung cấp metrics tài nguyên của các container Docker. |
+| MySQL Exporter | Cung cấp metrics từ MySQL, ví dụ trạng thái kết nối database. |
+| Nginx Exporter | Cung cấp metrics hoạt động của Nginx. |
+| Blackbox Exporter | Kiểm tra endpoint HTTP của LMS và báo kết quả probe cho Prometheus. |
 
-Nhấn Ctrl+C để đóng tunnel; không dừng monitoring trên Ubuntu.
+Prometheus và Grafana chỉ bind trên `127.0.0.1` của Ubuntu, không mở trực tiếp ra mạng LAN. Từ Windows, truy cập chúng qua SSH tunnel ở mục 17.
 
-Nếu cổng 3000 Windows đang bận, thay ánh xạ bằng:
+### 16.1. Kiểm tra cấu hình monitoring
+
+```bash
+cd /home/duongpham/projects/lms-demo
+
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  --profile monitoring \
+  config --quiet
+```
+
+Mục đích: kiểm tra cú pháp Compose và các biến môi trường bắt buộc mà không in toàn bộ cấu hình có thể chứa thông tin nhạy cảm.
+
+Lệnh này đã được dùng để kiểm tra cấu hình monitoring.
+
+### 16.2. Khởi động monitoring
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  --profile monitoring \
+  up -d
+```
+
+Mục đích: khởi động các dịch vụ monitoring theo profile `monitoring`. Các container LMS và database cũng được giữ trong cấu hình Compose này.
+
+Lệnh này đã được dùng để chạy monitoring. Nếu chỉ muốn khởi động một vài dịch vụ, có thể ghi tên service ở cuối, ví dụ `up -d prometheus grafana`.
+
+### 16.3. Xem trạng thái và log
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  --profile monitoring \
+  ps
+```
+
+Mục đích: xem container của Prometheus, Grafana, exporters và các service liên quan có đang chạy hay không.
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  --profile monitoring \
+  logs --tail=50 prometheus grafana alertmanager
+```
+
+Mục đích: xem log gần nhất khi dashboard hoặc việc thu thập metrics có vấn đề.
+
+### 16.4. Kiểm tra alert rules
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  --profile monitoring \
+  exec prometheus promtool check rules /etc/prometheus/rules.yml
+```
+
+Mục đích: kiểm tra cú pháp các alert rules Prometheus. Kết quả hợp lệ chỉ chứng minh rule viết đúng cú pháp; cần xem trạng thái alert trên Prometheus/Alertmanager để xác nhận cảnh báo hoạt động.
+
+Lệnh kiểm tra rules này đã được dùng.
+
+### 16.5. Truy cập Prometheus và xem metrics
+
+Khi SSH tunnel ở mục 17 đang chạy, mở trên Windows:
+
+- Prometheus: <http://127.0.0.1:9090>
+- Prometheus targets: <http://127.0.0.1:9090/targets>
+- Prometheus alerts: <http://127.0.0.1:9090/alerts>
+
+Trên trang Prometheus, nhập biểu thức PromQL vào ô truy vấn rồi bấm **Execute**.
+
+```promql
+up
+```
+
+Mục đích: xem các target Prometheus đang scrape. Giá trị `1` nghĩa là target trả lời scrape thành công; `0` nghĩa là Prometheus không scrape được target đó.
+
+```promql
+mysql_up
+```
+
+Mục đích: xem MySQL Exporter có kết nối được MySQL không. Giá trị `1` nghĩa là exporter truy cập được MySQL.
+
+```promql
+probe_success{job="lms-health"}
+```
+
+Mục đích: xem kết quả kiểm tra HTTP health endpoint của LMS. Giá trị `1` nghĩa là phép kiểm tra thành công.
+
+Các biểu thức này dùng để kiểm tra nhanh. Khi trình bày, cần mở Prometheus và xác nhận kết quả trên hệ thống đang chạy.
+
+### 16.6. Truy cập Grafana và dashboard
+
+Khi SSH tunnel ở mục 17 đang chạy, mở trên Windows:
+
+- Grafana: <http://127.0.0.1:3000>
+
+Đăng nhập bằng tài khoản Grafana đã cấu hình. Tên đăng nhập và mật khẩu nằm trong file môi trường riêng:
 
 ```text
+$HOME/lms-demo-backups/monitoring.env
+```
+
+Không ghi mật khẩu vào `commands.md`, GitHub hoặc ảnh chụp màn hình.
+
+Trong Grafana:
+
+1. Mở **Dashboards**.
+2. Chọn dashboard **LMS Demo overview**.
+3. Chọn khoảng thời gian, ví dụ **Last 15 minutes** hoặc **Last 6 hours**.
+4. Xem các biểu đồ CPU, RAM, health probe và trạng thái exporter.
+5. Vào **Explore** để truy vấn datasource Prometheus hoặc Loki.
+
+Dashboard được provision từ file:
+
+```text
+infra/monitoring/grafana/dashboards/lms-overview.json
+```
+
+Dashboard provision hiện đặt `editable: false`; sửa dashboard bằng cách chỉnh file JSON trong repository rồi provision lại, thay vì chỉnh trực tiếp trên giao diện Grafana.
+
+Nếu cần nạp lại datasource hoặc dashboard sau khi thay đổi file cấu hình:
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  --profile monitoring \
+  restart grafana
+```
+
+Mục đích: khởi động lại riêng Grafana để đọc lại cấu hình provision. Chỉ chạy khi có thay đổi cấu hình hoặc cần chẩn đoán; lệnh này sẽ làm Grafana gián đoạn ngắn.
+
+### 16.7. Kiểm tra cấu hình Prometheus — tùy chọn
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  --profile monitoring \
+  exec prometheus promtool check config /etc/prometheus/prometheus.yml
+```
+
+Mục đích: kiểm tra cú pháp file cấu hình Prometheus. Đây là bước kiểm tra tùy chọn; chỉ chạy khi cần xác minh cấu hình Prometheus.
+
+### 16.8. Nạp lại cấu hình Prometheus — tùy chọn
+
+Prometheus được cấu hình bật lifecycle endpoint. Nếu vừa sửa cấu hình hoặc rules và muốn thử nạp lại mà không restart container:
+
+```bash
+curl -X POST http://127.0.0.1:9090/-/reload
+```
+
+Mục đích: yêu cầu Prometheus nạp lại cấu hình. Chỉ dùng khi đã sửa file cấu hình/rules và tunnel hoặc lệnh được chạy trên chính Ubuntu. Sau đó kiểm tra lại `/targets` và `/alerts`.
+
+Lệnh này chưa phải lệnh kiểm tra thường ngày; không cần chạy nếu chưa sửa cấu hình Prometheus.
+
+### 16.9. Lưu ý về cảnh báo
+
+Các alert rules hiện dùng để phát hiện tình trạng hạ tầng như CPU/RAM cao, health check lỗi hoặc target exporter bị mất. Alertmanager nhận alert từ Prometheus, nhưng hiện chưa cấu hình kênh thông báo ra ngoài.
+
+Không kết luận hệ thống đã gửi cảnh báo email/Telegram hoặc đã chứng minh chuỗi sự cố tài khoản đăng nhập → alert → truy vết log nếu chưa cấu hình và kiểm thử luồng đó thực tế.
+
+### 16.10. Dừng riêng các dịch vụ monitoring
+
+```bash
+docker compose \
+  --env-file .env \
+  --env-file "$HOME/lms-demo-backups/monitoring.env" \
+  -f docker-compose.yml \
+  -f docker-compose.monitoring.yml \
+  --profile monitoring \
+  stop prometheus grafana alertmanager node-exporter cadvisor mysql-exporter nginx-exporter blackbox-exporter
+```
+
+Mục đích: dừng các dịch vụ monitoring mà vẫn giữ container và volume dữ liệu. Không dùng `down -v`, vì có thể xóa volume.
+
+## 17. Windows: SSH tunnel và truy cập monitoring
+
+Các cổng Prometheus, Grafana và Alertmanager chỉ mở trên localhost Ubuntu. SSH tunnel chuyển các cổng đó về Windows để truy cập bằng trình duyệt mà không cần mở chúng ra mạng LAN.
+
+Chạy lệnh sau trong PowerShell Windows và giữ cửa sổ đó mở:
+
+```powershell
+ssh -N `
+  -L 9090:127.0.0.1:9090 `
+  -L 3000:127.0.0.1:3000 `
+  -L 9093:127.0.0.1:9093 `
+  duongpham@192.168.118.131
+```
+
+Thay `192.168.118.131` bằng IP Ubuntu hiện tại nếu IP đã thay đổi.
+
+Mục đích:
+
+- `-N`: chỉ tạo tunnel, không mở shell.
+- `-L 9090:127.0.0.1:9090`: chuyển Prometheus Ubuntu về cổng 9090 trên Windows.
+- `-L 3000:127.0.0.1:3000`: chuyển Grafana Ubuntu về cổng 3000 trên Windows.
+- `-L 9093:127.0.0.1:9093`: chuyển Alertmanager Ubuntu về cổng 9093 trên Windows.
+
+Sau khi tunnel kết nối thành công, mở:
+
+| Thành phần | URL trên Windows | Dùng để |
+|---|---|---|
+| Prometheus | <http://127.0.0.1:9090> | Chạy PromQL, xem metrics và trạng thái targets. |
+| Prometheus Targets | <http://127.0.0.1:9090/targets> | Xác nhận Prometheus thu thập metrics từ exporters và health probe. |
+| Prometheus Alerts | <http://127.0.0.1:9090/alerts> | Xem alert rules và trạng thái Pending/Firing. |
+| Grafana | <http://127.0.0.1:3000> | Xem dashboard LMS và truy vấn Prometheus/Loki. |
+| Alertmanager | <http://127.0.0.1:9093> | Xem các alert được Prometheus gửi tới Alertmanager. |
+
+Nhấn `Ctrl+C` trong cửa sổ PowerShell để đóng tunnel. Việc này chỉ đóng đường truy cập từ Windows, không dừng Prometheus, Grafana hoặc các container trên Ubuntu.
+
+Nếu cổng 3000 trên Windows đang được ứng dụng khác sử dụng, đổi ánh xạ Grafana thành:
+
+```powershell
 -L 13000:127.0.0.1:3000
 ```
 
-Sau đó mở Grafana tại `http://localhost:13000`.
+Khi đó mở Grafana tại <http://127.0.0.1:13000>.
 
 ## 18. Windows: chuyển tài liệu giữa hai máy
 
