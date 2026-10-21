@@ -7,6 +7,8 @@ const lessonQueries = require("../queries/lessonQueries");
 const quizQueries = require("../queries/quizQueries");
 const reviews = require("../queries/reviewQueries");
 const { findManageableCourse } = require("../services/courseAccessService");
+const { parseMultipart } = require("../middleware/multipart");
+const { resolveCoverImage, removeSavedCover, persistCourseCoverUpdate, removeOldCoverIfUnreferenced } = require("../services/coverImageService");
 const { courseFormData } = require("./adminCourses");
 const { lessonFormData } = require("./adminLessons");
 const quizAdminRoutes = require("./adminQuizzes");
@@ -71,17 +73,24 @@ router.get("/teacher/courses/new", requireTeacher, (req, res) => {
   );
 });
 
-router.post("/teacher/courses", requireTeacher, verifyCsrfToken, async (req, res) => {
+router.post("/teacher/courses", requireTeacher, parseMultipart, verifyCsrfToken, async (req, res) => {
   const values = courseValues(req.body);
-  const error = validateCourse(values);
+  const error = req.fileError || validateCourse(values);
   if (error) {
     return res.status(422).render(
       "admin/courses/form",
       courseFormData("create", values, error, BASE_PATH)
     );
   }
-  await courseQueries.createForTeacher(pool, req.user.id, values);
-  return res.redirect(BASE_PATH);
+  const cover = await resolveCoverImage({ file: req.file, currentUrl: null });
+  if (cover.error) return res.status(422).render("admin/courses/form", courseFormData("create", values, cover.error, BASE_PATH));
+  try {
+    await courseQueries.createForTeacher(pool, req.user.id, { ...values, coverImageUrl: cover.url });
+    return res.redirect(BASE_PATH);
+  } catch (error) {
+    await removeSavedCover(cover.filepath);
+    throw error;
+  }
 });
 
 router.get("/teacher/courses/:courseId/edit", requireTeacher, async (req, res) => {
@@ -93,25 +102,43 @@ router.get("/teacher/courses/:courseId/edit", requireTeacher, async (req, res) =
   );
 });
 
-router.post("/teacher/courses/:courseId", requireTeacher, verifyCsrfToken, async (req, res) => {
+router.post("/teacher/courses/:courseId", requireTeacher, parseMultipart, verifyCsrfToken, async (req, res) => {
   const { courseId, course } = await assignedCourse(req);
   if (!course) return notFound(res);
   const values = courseValues(req.body);
-  const error = validateCourse(values);
+  const error = req.fileError || validateCourse(values);
   if (error) {
     return res.status(422).render(
       "admin/courses/form",
       courseFormData("edit", { ...course, ...values }, error, BASE_PATH)
     );
   }
-  const [result] = await courseQueries.updateForTeacher(pool, req.user.id, courseId, values);
-  if (!result || result.affectedRows === 0) {
-    const stillAssigned = await findManageableCourse(pool, req.user, courseId);
-    if (!stillAssigned) return notFound(res);
+  const update = await persistCourseCoverUpdate({
+    file: req.file,
+    currentUrl: course.cover_image_url,
+    update: (coverUrl) =>
+      courseQueries.updateForTeacher(pool, req.user.id, courseId, {
+        ...values,
+        coverImageUrl: coverUrl
+      }),
+    confirmExists: () => findManageableCourse(pool, req.user, courseId)
+  });
+  if (update.error) {
+    return res.status(422).render(
+      "admin/courses/form",
+      courseFormData("edit", { ...course, ...values }, update.error, BASE_PATH)
+    );
   }
+  if (!update.ok && update.reason === "not_found") return notFound(res);
+  await removeOldCoverIfUnreferenced({
+    currentUrl: course.cover_image_url,
+    newUrl: update.url,
+    courseId,
+    countReferences: (coverUrl, excludedCourseId) =>
+      courseQueries.countCoverReferences(pool, coverUrl, excludedCourseId)
+  });
   return res.redirect(BASE_PATH);
 });
-
 router.post(
   "/teacher/courses/:courseId/toggle-status",
   requireTeacher,

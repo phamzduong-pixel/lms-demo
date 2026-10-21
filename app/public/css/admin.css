@@ -567,3 +567,15 @@
 .teacher-form-card form { display: grid; gap: var(--space-4); }
 @media (max-width: 900px) { .teacher-filters { grid-template-columns: 1fr 1fr; } .teacher-filters .form-actions { grid-column: 1 / -1; } .teacher-detail-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .teacher-filters, .teacher-detail-summary { grid-template-columns: 1fr; } .teacher-filters .form-actions { grid-column: auto; } .teacher-detail-summary .button { width: 100%; } }
+
+.cover-image-fieldset { display: grid; gap: var(--space-4); margin: var(--space-4) 0; padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md); }
+.cover-image-fieldset legend { padding: 0 .35rem; color: var(--primary-strong); font-weight: 800; }
+.cover-image-preview { display: flex; align-items: center; gap: var(--space-3); min-height: 90px; color: var(--muted); }
+.cover-image-preview img { width: 150px; height: 84px; border-radius: var(--radius-sm); object-fit: cover; background: var(--surface); }
+.cover-image-preview.is-empty { padding: var(--space-3); border: 1px dashed var(--line); border-radius: var(--radius-sm); }
+.field-help { display: block; margin-top: .35rem; color: var(--muted); font-size: .86rem; }
+
+.cover-image-fieldset input[type="file"] { width: 100%; padding: .55rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+.cover-image-fieldset input[type="file"]::file-selector-button { margin-right: .7rem; padding: .55rem .85rem; border: 0; border-radius: var(--radius-sm); background: var(--primary); color: #fff; font: inherit; font-weight: 800; cursor: pointer; transition: background .2s ease, transform .2s ease; }
+.cover-image-fieldset input[type="file"]::file-selector-button:hover { background: var(--primary-strong); transform: translateY(-1px); }
+.cover-image-fieldset input[type="file"]::file-selector-button:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent); outline-offset: 2px; }

@@ -7,7 +7,6 @@ function validateCourse(values) {
   if (!values.title) return "Tiêu đề khóa học phải có từ 1 đến 255 ký tự.";
   if (!values.category) return "Danh mục là bắt buộc.";
   if (!["beginner","intermediate","advanced"].includes(values.level)) return "Trình độ không hợp lệ.";
-  if (values.coverImageUrl) { try { const url = new URL(values.coverImageUrl); if (!["http:","https:"].includes(url.protocol)) throw new Error(); } catch { return "URL ảnh bìa phải là URL HTTP hoặc HTTPS hợp lệ."; } }
   return null;
 }
 function validateLesson(values) { const position = Number(values.position); if (!values.title) return "Tiêu đề bài học phải có từ 1 đến 255 ký tự."; if (!Number.isInteger(position) || position < 1 || position > 4294967295) return "Vị trí bài học phải là số nguyên dương."; if (values.content.length > 1000000) return "Nội dung bài học quá dài."; return null; }
@@ -21,4 +20,21 @@ function formatDateTime(value) {
     timeZone: "Asia/Ho_Chi_Minh"
   }).format(date);
 }
-module.exports = { parseId, renderError, courseValues, lessonValues, validateCourse, validateLesson, formatDateTime };
+function getSafeCoverImageUrl(value) {
+  if (typeof value !== "string") return "";
+  const candidate = value.trim();
+  if (!candidate) return "";
+  let parsed;
+  try {
+    parsed = new URL(candidate, "http://lms.local");
+  } catch (error) {
+    return "";
+  }
+  const isInternal = candidate.startsWith("/") && !candidate.startsWith("//") && parsed.origin === "http://lms.local";
+  const isExternal = parsed.protocol === "http:" || parsed.protocol === "https:";
+  if (!isInternal && !isExternal) return "";
+  const hostname = parsed.hostname.toLowerCase();
+  const isGoogleRedirect = isExternal && (hostname === "google.com" || hostname.endsWith(".google.com")) && (parsed.pathname.toLowerCase() === "/imgres" || parsed.searchParams.has("imgurl"));
+  return isGoogleRedirect ? "" : candidate;
+}
+module.exports = { parseId, renderError, courseValues, lessonValues, validateCourse, validateLesson, formatDateTime, getSafeCoverImageUrl };

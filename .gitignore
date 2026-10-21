@@ -6,3 +6,6 @@ node_modules/
 coverage/
 
 /docs/local/
+
+app/public/uploads/covers/*
+!app/public/uploads/covers/.gitkeep

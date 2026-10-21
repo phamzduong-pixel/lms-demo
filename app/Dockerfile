@@ -7,6 +7,7 @@ RUN npm ci --omit=dev
 COPY src ./src
 COPY views ./views
 COPY public ./public
+RUN mkdir -p /app/public/uploads/covers && chown -R node:node /app
 
 ENV NODE_ENV=production
 USER node

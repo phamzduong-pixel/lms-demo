@@ -69,8 +69,13 @@ async function update(pool, courseId, values, legacyDescription) {
 async function updateForTeacher(pool, teacherId, courseId, values) {
   return pool.execute("UPDATE courses SET title = ?, description = ?, category = ?, level = ?, cover_image_url = ?, short_description = ?, learning_objectives = ? WHERE id = ? AND teacher_id = ?", [values.title, values.description, values.category, values.level, values.coverImageUrl || null, values.shortDescription || null, values.learningObjectives || null, courseId, teacherId]);
 }
+async function countCoverReferences(pool, coverUrl, excludedCourseId) {
+  const [rows] = await pool.execute("SELECT COUNT(*) AS reference_count FROM courses WHERE cover_image_url = ? AND id <> ?", [coverUrl, excludedCourseId]);
+  return Number(rows[0] && rows[0].reference_count || 0);
+}
+
 async function toggleStatus(pool, courseId) { return pool.execute("UPDATE courses SET status = CASE WHEN status = 'draft' THEN 'published' ELSE 'draft' END WHERE id = ?", [courseId]); }
 async function toggleStatusForTeacher(pool, teacherId, courseId) { return pool.execute("UPDATE courses SET status = CASE WHEN status = 'draft' THEN 'published' ELSE 'draft' END WHERE id = ? AND teacher_id = ?", [courseId, teacherId]); }
 async function countEnrollments(pool, courseId) { const [rows] = await pool.execute("SELECT COUNT(*) AS enrollment_count FROM enrollments WHERE course_id = ?", [courseId]); return Number(rows[0] && rows[0].enrollment_count || 0); }
 async function removeIfNoEnrollments(pool, courseId) { return pool.execute("DELETE FROM courses WHERE id = ? AND NOT EXISTS (SELECT 1 FROM enrollments WHERE course_id = ?)", [courseId, courseId]); }
-module.exports = { escapeLikeTerm, catalogFilters, listPublished, listPublishedCategories, findPublishedById, findById, listForAdmin, listForTeacher, findAssignedByTeacher, listEnrolledStudents, create, createForTeacher, update, updateForTeacher, toggleStatus, toggleStatusForTeacher, countEnrollments, removeIfNoEnrollments };
+module.exports = { escapeLikeTerm, catalogFilters, listPublished, listPublishedCategories, findPublishedById, findById, listForAdmin, listForTeacher, findAssignedByTeacher, listEnrolledStudents, create, createForTeacher, update, updateForTeacher, toggleStatus, toggleStatusForTeacher, countEnrollments, countCoverReferences, removeIfNoEnrollments };

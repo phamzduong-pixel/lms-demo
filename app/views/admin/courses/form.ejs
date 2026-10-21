@@ -1,4 +1,35 @@
-<% const pageStyles=["admin.css"]; %>
+<% const pageStyles=["admin.css"]; const pageScripts=["course-form.js"]; %>
 <% const basePath = typeof managementBasePath !== "undefined" && managementBasePath ? managementBasePath : "/admin"; %><%- include("../../header",{pageStyles}) %>
 <section class="page-heading"><a class="back-link" href="<%= basePath %>">← Quản lý khóa học</a><h1><%= heading %></h1></section>
-<section class="card narrow"><% if(error){ %><div class="alert error"><%= error %></div><% } %><form method="post" action="<%= formAction %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label>Tên khóa học<input name="title" value="<%= values.title || '' %>" required maxlength="255"></label><label>Mô tả<textarea name="description" rows="5"><%= values.description || '' %></textarea></label><label>Danh mục<input name="category" value="<%= values.category || '' %>" required maxlength="100"></label><label>Trình độ<select name="level"><option value="beginner" <%= values.level==='beginner'?'selected':'' %>>Cơ bản</option><option value="intermediate" <%= values.level==='intermediate'?'selected':'' %>>Trung cấp</option><option value="advanced" <%= values.level==='advanced'?'selected':'' %>>Nâng cao</option></select></label><label>URL ảnh bìa<input type="url" name="cover_image_url" value="<%= values.coverImageUrl || values.cover_image_url || '' %>"></label><label>Mô tả ngắn<textarea name="short_description"><%= values.shortDescription || values.short_description || '' %></textarea></label><label>Mục tiêu học tập<textarea name="learning_objectives"><%= values.learningObjectives || values.learning_objectives || '' %></textarea></label><button class="button">Lưu khóa học</button></form></section><%- include("../../footer") %>
+<section class="card narrow">
+  <% if(error){ %><div class="alert error"><%= error %></div><% } %>
+  <form method="post" action="<%= formAction %>" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Tên khóa học<input name="title" value="<%= values.title || '' %>" required maxlength="255"></label>
+    <label>Mô tả<textarea name="description" rows="5"><%= values.description || '' %></textarea></label>
+    <label>Danh mục<input name="category" value="<%= values.category || '' %>" required maxlength="100"></label>
+    <label>Trình độ<select name="level"><option value="beginner" <%= values.level==='beginner'?'selected':'' %>>Cơ bản</option><option value="intermediate" <%= values.level==='intermediate'?'selected':'' %>>Trung cấp</option><option value="advanced" <%= values.level==='advanced'?'selected':'' %>>Nâng cao</option></select></label>
+
+    <fieldset class="cover-image-fieldset">
+      <legend>Ảnh bìa</legend>
+      <% if (values.coverImageUrl || values.cover_image_url) { %>
+        <input type="hidden" name="cover_image_url" value="<%= values.coverImageUrl || values.cover_image_url %>">
+        <div class="cover-image-preview">
+          <img data-cover-preview src="<%= values.coverImageUrl || values.cover_image_url %>" alt="Ảnh bìa hiện tại">
+          <span data-cover-preview-label>Ảnh bìa hiện tại</span>
+        </div>
+      <% } else { %>
+        <div class="cover-image-preview is-empty"><span data-cover-preview-label>Chưa có ảnh bìa</span></div>
+      <% } %>
+      <label>Gửi file ảnh
+        <input type="file" name="cover_image_file" accept="image/jpeg,image/png,image/gif,image/webp" data-cover-upload>
+        <small class="field-help">JPG, PNG, GIF hoặc WebP; tối đa 5 MB.</small>
+      </label>
+    </fieldset>
+
+    <label>Mô tả ngắn<textarea name="short_description"><%= values.shortDescription || values.short_description || '' %></textarea></label>
+    <label>Mục tiêu học tập<textarea name="learning_objectives"><%= values.learningObjectives || values.learning_objectives || '' %></textarea></label>
+    <button class="button">Lưu khóa học</button>
+  </form>
+</section>
+<%- include("../../footer") %>
