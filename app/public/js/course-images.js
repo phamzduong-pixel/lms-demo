@@ -8,8 +8,18 @@
     frame.setAttribute("aria-label", image.alt || "Khóa học chưa có ảnh bìa");
   }
 
+  function showFallback(image) {
+    const fallback = image.dataset.coverFallback;
+    if (fallback && image.getAttribute("src") !== fallback) {
+      image.src = fallback;
+      image.hidden = false;
+      return;
+    }
+    markBroken(image);
+  }
+
   document.querySelectorAll("[data-course-cover]").forEach((image) => {
-    image.addEventListener("error", () => markBroken(image), { once: true });
-    if (image.complete && image.naturalWidth === 0) markBroken(image);
+    image.addEventListener("error", () => showFallback(image));
+    if (image.complete && image.naturalWidth === 0) showFallback(image);
   });
 })();

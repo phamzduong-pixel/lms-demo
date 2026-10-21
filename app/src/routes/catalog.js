@@ -3,10 +3,16 @@ const pool = require("../db");
 const courseQueries = require("../queries/courseQueries");
 const reviewQueries = require("../queries/reviewQueries");
 const { getPublicCourse } = require("../services/lmsService");
-const { parseId, renderError, getSafeCoverImageUrl } = require("./routeHelpers");
+const { parseId, renderError, getSafeCoverImageUrl, getFallbackCoverImageUrl } = require("./routeHelpers");
 
 const router = express.Router();
-function presentCourse(course) { return { ...course, cover_image_url: getSafeCoverImageUrl(course.cover_image_url) }; }
+function presentCourse(course) {
+  return {
+    ...course,
+    cover_image_url: getSafeCoverImageUrl(course.cover_image_url),
+    fallback_cover_image_url: getFallbackCoverImageUrl(course.title)
+  };
+}
 
 router.get("/", async (req, res) => {
   const courses = await courseQueries.listPublished(pool, { sort: "newest" });
@@ -44,3 +50,4 @@ router.get("/courses/:courseId", async (req, res) => {
 });
 
 module.exports = router;
+module.exports.presentCourse = presentCourse;

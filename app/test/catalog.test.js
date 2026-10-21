@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
 const courseQueries = require("../src/queries/courseQueries");
+const { getFallbackCoverImageUrl } = require("../src/routes/routeHelpers");
 
 test("published catalog search uses a parameterized title filter", async () => {
   let receivedSql = "";
@@ -73,4 +74,11 @@ test("course update passes the course id for its WHERE clause", async () => {
 
   assert.equal(receivedSql, "UPDATE courses SET title = ?, description = ? WHERE id = ?");
   assert.deepEqual(receivedParams, ["Updated title", "Updated description", 12]);
+});
+test("course cover fallback matches the supported Vietnamese course titles", () => {
+  assert.equal(getFallbackCoverImageUrl("Địa lý"), "/images/course-covers/geography.svg");
+  assert.equal(getFallbackCoverImageUrl("Tiếng Trung"), "/images/course-covers/chinese.svg");
+  assert.equal(getFallbackCoverImageUrl("Gen AI"), "/images/course-covers/gen-ai.svg");
+  assert.equal(getFallbackCoverImageUrl("Văn học"), "/images/course-covers/literature.svg");
+  assert.equal(getFallbackCoverImageUrl("Tiếng Anh"), "/images/course-covers/english.svg");
 });

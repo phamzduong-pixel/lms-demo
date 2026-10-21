@@ -37,4 +37,21 @@ function getSafeCoverImageUrl(value) {
   const isGoogleRedirect = isExternal && (hostname === "google.com" || hostname.endsWith(".google.com")) && (parsed.pathname.toLowerCase() === "/imgres" || parsed.searchParams.has("imgurl"));
   return isGoogleRedirect ? "" : candidate;
 }
-module.exports = { parseId, renderError, courseValues, lessonValues, validateCourse, validateLesson, formatDateTime, getSafeCoverImageUrl };
+function getFallbackCoverImageUrl(title) {
+  const normalizedTitle = String(title || "")
+    .normalize("NFD")
+    .toLowerCase()
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d");
+  const covers = [
+    ["dia ly", "/images/course-covers/geography.svg"],
+    ["tieng trung", "/images/course-covers/chinese.svg"],
+    ["gen ai", "/images/course-covers/gen-ai.svg"],
+    ["van hoc", "/images/course-covers/literature.svg"],
+    ["tieng anh", "/images/course-covers/english.svg"],
+    ["toan", "/images/course-covers/math.svg"]
+  ];
+  const match = covers.find(([keyword]) => normalizedTitle.includes(keyword));
+  return match ? match[1] : "/images/course-covers/default.svg";
+}
+module.exports = { parseId, renderError, courseValues, lessonValues, validateCourse, validateLesson, formatDateTime, getSafeCoverImageUrl, getFallbackCoverImageUrl };

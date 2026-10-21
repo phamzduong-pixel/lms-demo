@@ -45,9 +45,10 @@
   <% if (featuredCourses && featuredCourses.length) { %>
     <div class="home-course-grid">
       <% featuredCourses.forEach((course) => { %>
+        <% const coverUrl = course.cover_image_url || course.fallback_cover_image_url || "/images/course-covers/default.svg"; const fallbackCoverUrl = course.fallback_cover_image_url || "/images/course-covers/default.svg"; %>
         <article class="card home-course-card">
-          <div class="course-cover-frame <%= course.cover_image_url ? "" : "is-placeholder" %>" data-cover-frame<% if (!course.cover_image_url) { %> role="img" aria-label="Khóa học chưa có ảnh bìa"<% } %>>
-            <% if (course.cover_image_url) { %><img class="course-cover" data-course-cover src="<%= course.cover_image_url %>" alt="Ảnh bìa khóa <%= course.title %>"><% } %>
+          <div class="course-cover-frame" data-cover-frame>
+            <img class="course-cover" data-course-cover data-cover-fallback="<%= fallbackCoverUrl %>" src="<%= coverUrl %>" alt="Ảnh bìa khóa <%= course.title %>">
             <span class="course-cover-placeholder" aria-hidden="true">Chưa có ảnh bìa</span>
           </div>
           <span class="badge published"><%= course.category %> · <%= course.level %></span>
