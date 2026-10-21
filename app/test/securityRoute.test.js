@@ -11,26 +11,36 @@ function routeHandler() {
   return layer.route.stack.at(-1).handle;
 }
 
-test("security events query errors are propagated instead of rendered as an empty 200 page", async () => {
+test("security events route is hidden and does not query audit data", async () => {
   const originalCount = securityQueries.countEvents;
   const originalList = securityQueries.listEvents;
+  let countCalled = false;
+  let listCalled = false;
   securityQueries.countEvents = async () => {
-    const error = new Error("missing compaction column");
-    error.code = "ER_BAD_FIELD_ERROR";
-    throw error;
+    countCalled = true;
   };
-  securityQueries.listEvents = originalList;
+  securityQueries.listEvents = async () => {
+    listCalled = true;
+  };
 
+  let statusCode;
+  let rendered;
   const response = {
-    render() {
-      throw new Error("route must not render a fallback page");
+    status(status) {
+      statusCode = status;
+      return this;
+    },
+    render(view, data) {
+      rendered = { view, data };
     }
   };
   try {
-    await assert.rejects(
-      routeHandler()({ user: { role: "admin" }, query: {} }, response, () => {}),
-      (error) => error.code === "ER_BAD_FIELD_ERROR"
-    );
+    await routeHandler()({ user: { role: "admin" }, query: {} }, response, () => {});
+    assert.equal(statusCode, 404);
+    assert.equal(rendered.view, "error");
+    assert.equal(rendered.data.title, "Không tìm thấy trang");
+    assert.equal(countCalled, false);
+    assert.equal(listCalled, false);
   } finally {
     securityQueries.countEvents = originalCount;
     securityQueries.listEvents = originalList;

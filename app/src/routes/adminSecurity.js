@@ -8,6 +8,7 @@ const { formatDateTime } = require("./routeHelpers");
 const router = express.Router();
 const requireAdmin = requireRole("admin");
 const PAGE_SIZE = 20;
+const SECURITY_EVENT_VIEW_ENABLED = false;
 
 function queryValue(value) {
   return typeof value === "string" ? value.trim().slice(0, 100) : "";
@@ -51,6 +52,13 @@ function pageUrl(filters, page) {
 }
 
 router.get("/admin/security-events", requireAdmin, async (req, res) => {
+  if (!SECURITY_EVENT_VIEW_ENABLED) {
+    return res.status(404).render("error", {
+      title: "Không tìm thấy trang",
+      message: "Đường dẫn bạn truy cập không tồn tại hoặc đã được thay đổi."
+    });
+  }
+
   const filters = {
     from: dateValue(req.query.from),
     to: dateValue(req.query.to),

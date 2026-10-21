@@ -36,7 +36,6 @@
         <% } %>
         <% if (currentUser && currentUser.role === "admin") { %>
           <a class="nav-link <%= currentRoute.startsWith('/admin/courses') || currentRoute === '/admin' ? 'active' : '' %>" href="/admin" <% if (currentRoute.startsWith('/admin/courses') || currentRoute === '/admin') { %>aria-current="page"<% } %>>Quản trị</a>
-          <a class="nav-link <%= currentRoute.startsWith('/admin/security-events') ? 'active' : '' %>" href="/admin/security-events" <% if (currentRoute.startsWith('/admin/security-events')) { %>aria-current="page"<% } %>>Nhật ký bảo mật</a>
           <a class="nav-link <%= currentRoute.startsWith('/admin/students') ? 'active' : '' %>" href="/admin/students" <% if (currentRoute.startsWith('/admin/students')) { %>aria-current="page"<% } %>>Học viên</a>
           <a class="nav-link <%= currentRoute.startsWith('/admin/teachers') ? 'active' : '' %>" href="/admin/teachers" <% if (currentRoute.startsWith('/admin/teachers')) { %>aria-current="page"<% } %>>Giáo viên</a>
         <% } %>
