@@ -29,7 +29,7 @@ groups:
           description: "Container {{ $labels.name }} vượt ngưỡng CPU 85%."
 
       - alert: ContainerHighMemory
-        expr: 100 * container_memory_usage_bytes{container_label_com_docker_compose_service!=""} / clamp_min(container_spec_memory_limit_bytes{container_label_com_docker_compose_service!=""}, 1) > 90
+        expr: 100 * container_memory_usage_bytes{container_label_com_docker_compose_service!=""} / (container_spec_memory_limit_bytes{container_label_com_docker_compose_service!=""} > 0) > 90
         for: 5m
         labels:
           severity: warning
