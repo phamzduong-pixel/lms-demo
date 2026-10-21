@@ -1,10 +1,10 @@
 async function listStudents(pool) {
   const [rows] = await pool.execute(
-    "SELECT u.id, u.full_name, u.email, u.created_at, " +
+    "SELECT u.id, u.full_name, u.email, u.is_active, u.created_at, " +
     "COUNT(e.id) AS enrolled_course_count " +
     "FROM users u LEFT JOIN enrollments e ON e.user_id = u.id " +
     "WHERE u.role = 'student' " +
-    "GROUP BY u.id, u.full_name, u.email, u.created_at " +
+    "GROUP BY u.id, u.full_name, u.email, u.is_active, u.created_at " +
     "ORDER BY u.full_name ASC, u.id ASC"
   );
   return rows;
@@ -12,7 +12,7 @@ async function listStudents(pool) {
 
 async function findStudentById(pool, studentId) {
   const [rows] = await pool.execute(
-    "SELECT id, full_name, email, created_at FROM users " +
+    "SELECT id, full_name, email, is_active, created_at FROM users " +
     "WHERE id = ? AND role = 'student'",
     [studentId]
   );
@@ -35,4 +35,21 @@ async function listCoursesForStudent(pool, studentId) {
   return rows;
 }
 
-module.exports = { listStudents, findStudentById, listCoursesForStudent };
+async function updateStudent(pool, studentId, fullName, email) {
+  return pool.execute(
+    "UPDATE users SET full_name = ?, email = ? WHERE id = ? AND role = 'student'",
+    [fullName, email, studentId]
+  );
+}
+
+async function setActive(pool, studentId, isActive) {
+  return pool.execute(
+    "UPDATE users SET is_active = ?, session_version = session_version + 1 " +
+      "WHERE id = ? AND role = 'student'",
+    [isActive ? 1 : 0, studentId]
+  );
+}
+
+module.exports = {
+  listStudents, findStudentById, listCoursesForStudent, updateStudent, setActive
+};

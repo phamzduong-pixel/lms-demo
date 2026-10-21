@@ -3,23 +3,28 @@
 <section class="page-heading split-heading">
   <div>
     <p class="eyebrow">Quản trị</p>
-    <h1>Học viên</h1>
-    <p>Danh sách học viên và số khóa học đã đăng ký. Thông tin này chỉ ở chế độ xem.</p>
+    <h1>Quản lý học viên</h1>
+    <p>Tạo, cập nhật và quản lý trạng thái tài khoản học viên mà không xóa lịch sử học tập.</p>
   </div>
-  <a class="button secondary" href="/admin">Quản lý khóa học</a>
+  <div class="form-actions">
+    <a class="button" href="/admin/students/new">Thêm học viên</a>
+    <a class="button secondary" href="/admin">Quản lý khóa học</a>
+  </div>
 </section>
+<% if (message) { %><div class="alert success" role="status"><%= message %></div><% } %>
 <% if (!students.length) { %>
   <section class="card empty-state"><h2>Chưa có học viên</h2><p>Danh sách sẽ xuất hiện sau khi có tài khoản học viên.</p></section>
 <% } else { %>
   <section class="card table-card">
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>Học viên</th><th>Email</th><th>Khóa đã đăng ký</th><th></th></tr></thead>
+        <thead><tr><th>Học viên</th><th>Email</th><th>Trạng thái</th><th>Khóa đã đăng ký</th><th></th></tr></thead>
         <tbody>
           <% students.forEach((student) => { %>
             <tr>
               <td data-label="Học viên"><strong><%= student.full_name %></strong></td>
               <td data-label="Email"><%= student.email %></td>
+              <td data-label="Trạng thái"><span class="status-badge <%= student.is_active ? "status-active" : "status-locked" %>"><%= student.status_label %></span></td>
               <td data-label="Khóa đã đăng ký"><%= student.enrolled_course_count %></td>
               <td class="table-action" data-label="Thao tác"><a class="button secondary" href="/admin/students/<%= student.id %>">Xem chi tiết</a></td>
             </tr>
